@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Music Suggestor</string>
+    <string name="locationName">Set a Location</string>
+    <string name="locationNameLabel">Location Name:</string>
+    <string name="setLocationButton">Set Location</string>
+    <string name="addCurrentLocationButton">Add Current Location</string>
+    <string name="setLocationTitle">Give This Location A Name</string>
+    <string name="cancelString">Cancel</string>
+    <string name="playListName">Set Up Play List</string>
+    <string name="playListLabel">Play List:</string>
+    <string name="playSongButton">Play Song</string>
+    <string name="addSong">Add Song</string>
+    <string name="addSongButton">Add Song to Play List</string>
+    <string name="removeSongButton">Remove Song from Play List</string>
+    <string name="setSongTitle">Select the song to play</string>
+    <string name="goToPlayList">Go To Play List</string>
+    <string name="songSuggestionButton">Suggest a Song</string>
+    <string name="returnToMainScreen">Return to Main Screen</string>
+    <string name="goToAdjustLabel">Adjust Speed/Volume</string>
+    <string name="titleLabelName">Music Suggestor</string>
+    <string name="setVolumeText">Set the Volume:</string>
+    <string name="setSpeedText">Set Music Speed:</string>
+</resources>
