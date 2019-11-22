@@ -3,6 +3,7 @@ package com.example.musicsuggestor;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
@@ -12,6 +13,14 @@ public class SetUpIDActivity extends AppCompatActivity {
 	@Override protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_set_up_id);
+
+		Intent intent = getIntent();
+		if (getIntent().getExtras() != null) {
+			curLocation.setLatitude(getIntent().getDoubleExtra("latitude", 0.0));
+			curLocation.setLongitude(getIntent().getDoubleExtra("longitude", 0.0));
+		}
+
+		// Load the list of locations.
 	}
 
 	// Handles adding of location and returning to main screen.
@@ -20,8 +29,7 @@ public class SetUpIDActivity extends AppCompatActivity {
 		String newLocationName = editText.getText().toString(); // Name of the new location
 
 		// Assign the current location to the location name.
-//***Still need to get the current location.
-		UserLocation.AddLocation(newLocationName, null);
+		UserLocation.AddLocation(newLocationName, curLocation);
 
 		returnToMain(view);
 	}
@@ -31,4 +39,6 @@ public class SetUpIDActivity extends AppCompatActivity {
 		Intent intent = new Intent(this, MainActivity.class);
 		startActivity(intent);
 	}
+
+	private Location curLocation;   // Current location
 }

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class UserLocation {
 	// Constants - note that distances are in meters.
 	public static final int NO_USER_LOCATION = 0;   // Indicates no user location assigned to this place
-	private static final float SAME_LOCATION_DISTANCE = 40F;  // Distance two locations can be within each other and be the same location
+	public static final float SAME_LOCATION_DISTANCE = 40F; // Distance two locations can be within each other and be the same location
 
 	// Class-level variables
 	private static int nextLocationNumber = 0;      // Number of the next location
