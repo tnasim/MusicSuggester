@@ -14,11 +14,7 @@ public class SetUpIDActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_set_up_id);
 
-		Intent intent = getIntent();
-		if (getIntent().getExtras() != null) {
-			curLocation.setLatitude(getIntent().getDoubleExtra("latitude", 0.0));
-			curLocation.setLongitude(getIntent().getDoubleExtra("longitude", 0.0));
-		}
+		curLocation = UserLocation.getCurrentLocation();
 
 		// Load the list of locations.
 	}

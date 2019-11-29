@@ -66,5 +66,13 @@ public class PlayList {
 		return nameList;
 	}
 
+	public ArrayList<Song> getSongList() {
+		return songList;
+	}
+
+	public int getSize() {
+		return songList.size();
+	}
+
 	private ArrayList<Song> songList;   // List of songs
 }

@@ -12,6 +12,7 @@
     <string name="addSong">Add Song</string>
     <string name="addSongButton">Add Song to Play List</string>
     <string name="removeSongButton">Remove Song from Play List</string>
+    <string name="predictUserStatusButton">Predict User Status</string>
     <string name="setSongTitle">Select the song to play</string>
     <string name="goToPlayList">Go To Play List</string>
     <string name="songSuggestionButton">Suggest a Song</string>

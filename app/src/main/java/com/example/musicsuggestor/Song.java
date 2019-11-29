@@ -9,9 +9,10 @@ public class Song {
 	public Song() {
 		number = nextSongNumber;
 	}
-	public Song(String newName) {
+	public Song(String newName, int newNumber) {
 		this();
 		name = newName;
+		number = newNumber;
 	}
 
 	// Returns the name of the song.

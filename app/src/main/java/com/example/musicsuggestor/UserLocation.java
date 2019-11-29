@@ -10,6 +10,7 @@ public class UserLocation {
 	public static final int NO_USER_LOCATION = 0;   // Indicates no user location assigned to this place
 	public static final float SAME_LOCATION_DISTANCE = 40F; // Distance two locations can be within each other and be the same location
 
+	public static Location currentLocation;
 	// Class-level variables
 	private static int nextLocationNumber = 0;      // Number of the next location
 	private static ArrayList<UserLocation> locationList = new ArrayList<UserLocation>();    // List of locations
@@ -22,6 +23,14 @@ public class UserLocation {
 
 		locationList.add(this);
 		nameList.add(name);
+	}
+
+	public static Location getCurrentLocation() {
+		return currentLocation;
+	}
+
+	public static void setCurrentLocation(Location location) {
+		UserLocation.currentLocation = location;
 	}
 
 	// Assigns the specified location to the user location.
@@ -88,7 +97,8 @@ public class UserLocation {
 
 	// Returns if the specified location is in the location.
 	private boolean IsLocationInHere(Location toTest) {
-		return GetLocation().distanceTo(toTest) <= SAME_LOCATION_DISTANCE;
+		return UserLocation.getCurrentLocation().distanceTo(toTest) <= SAME_LOCATION_DISTANCE;
+//		return GetLocation().distanceTo(toTest) <= SAME_LOCATION_DISTANCE;
 	}
 
 	// Returns the location number.
