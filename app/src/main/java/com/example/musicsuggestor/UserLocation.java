@@ -64,6 +64,16 @@ public class UserLocation {
 		return userLoc.GetLocationNumber();
 	}
 
+	public static int getUserMobilityStatus() {
+		// TODO need to return values like stationary, slow and fast etc based on accelerometer data. Need to have a map of values.
+		return 1;
+	}
+
+	public static int getCurrentTime() {
+		// TODO return time information e.g. 'night', 'evening' etc. Should have a map of the values.
+		return 2;
+	}
+
 	// Returns the user location of the specified location.
 	private static UserLocation GetUserLocation(Location physicalLocation) {
 		for (UserLocation curLoc : locationList) {

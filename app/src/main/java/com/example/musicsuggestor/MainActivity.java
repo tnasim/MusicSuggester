@@ -91,8 +91,8 @@ public class MainActivity extends AppCompatActivity {
 
 								JSONObject jsonParam = new JSONObject();
 								jsonParam.put("location", 1);
-								jsonParam.put("time", 1);
-								jsonParam.put("movement", 1);
+								jsonParam.put("time", UserLocation.getCurrentTime());
+								jsonParam.put("movement", UserLocation.getUserMobilityStatus());
 
 								Log.i("JSON", jsonParam.toString());
 								DataOutputStream os = new DataOutputStream(conn.getOutputStream());

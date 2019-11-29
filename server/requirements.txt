@@ -1,0 +1,7 @@
+Flask==0.10.1
+cython
+numpy==1.16.5
+scikit-learn
+scipy
+pandas
+matplotlib
