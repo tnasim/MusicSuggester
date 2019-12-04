@@ -228,7 +228,6 @@ public class PlayListActivity extends AppCompatActivity {
 		AutoCompleteTextView editText = (AutoCompleteTextView) findViewById(R.id.songEditText);
 		String newSongName = editText.getText().toString(); // Name of the new song
 
-		// Assign the current location to the location name.
 		if (songList.GetSong(newSongName) == null)
 			songList.AddSong(new Song(newSongName, songList.getSize()+1));
 
@@ -243,6 +242,33 @@ public class PlayListActivity extends AppCompatActivity {
 		updateSpinner();
 
 		returnToMain(view);
+	}
+
+	public void removeSongFromList(View view) {
+
+		AutoCompleteTextView editText = (AutoCompleteTextView) findViewById(R.id.songEditText);
+		final String songToRemove = editText.getText().toString(); // Name of the new song
+
+
+		if(songList.removeSongByName(songToRemove) ) {
+			Log.d("DEBUG", "Song deleted: " + songToRemove);
+
+			Log.d("DEBUG", "=========== Current songs: ============");
+			for (String songname : songList.GetListOfNames()) {
+				Log.d("DEBUG", songname);
+			}
+			Log.d("DEBUG", "=========== ============== ============");
+
+			savePlaylist();
+			updateSpinner();
+			returnToMain(view);
+		} else {
+			PlayListActivity.this.runOnUiThread(new Runnable() {
+				public void run() {
+					Toast.makeText(PlayListActivity.this, "Unable to remove: " + songToRemove,Toast.LENGTH_SHORT).show();
+				}
+			});
+		}
 	}
 
 	// Handles when user wants to name the current location.

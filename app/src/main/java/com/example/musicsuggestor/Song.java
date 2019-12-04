@@ -13,6 +13,12 @@ public class Song {
 		this();
 		name = newName;
 		number = newNumber;
+		fileLocation = "";
+	}
+
+	public Song(String newName, int newNumber, String location) {
+		this(newName, newNumber);
+		fileLocation = location;
 	}
 
 	// Returns the name of the song.
@@ -25,6 +31,15 @@ public class Song {
 		return number;
 	}
 
+	public String getFileLocation() {
+		return fileLocation;
+	}
+
+	public void setFileLocation(String fileLocation) {
+		this.fileLocation = fileLocation;
+	}
+
 	private String name;    // Name of the song
 	private int number;     // Number of the song
+	private String fileLocation = "";
 }

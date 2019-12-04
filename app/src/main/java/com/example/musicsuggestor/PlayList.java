@@ -1,6 +1,7 @@
 package com.example.musicsuggestor;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 // Handles a play list.
 public class PlayList {
@@ -20,6 +21,28 @@ public class PlayList {
 
 		songList.add(toAdd);
 		return true;
+	}
+
+	/**
+	 * Remove song by name
+	 * @param name
+	 * @return true if remove successful, false if failed.
+	 */
+	public boolean removeSongByName(String name) {
+
+		Iterator<Song> itr = songList.iterator();
+
+		// remove all even numbers
+		while (itr.hasNext()) {
+			Song s = itr.next();
+
+			if (s.GetName().equalsIgnoreCase(name)) {
+				songList.remove(s);
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	// Removes the specified song from the list.
