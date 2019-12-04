@@ -213,6 +213,12 @@ public class MainActivity extends AppCompatActivity {
 		startActivity(intent);
 	}
 
+	// Handles when user wants to set the mood.
+	public void sendToMoods(View view) {
+		Intent intent = new Intent(this, MoodSettingActivity.class);
+		startActivity(intent);
+	}
+
 	// Handles when user wants to name the current location.
 	public void sendToLocations(View view) {
 		Intent intent = new Intent(this, SetUpIDActivity.class);

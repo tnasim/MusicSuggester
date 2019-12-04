@@ -15,7 +15,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".SuggestionActivity"></activity>
+        <activity android:name=".MoodSettingActivity"></activity>
+        <activity android:name=".SuggestionActivity" />
         <activity android:name=".AdjustmentActivity" />
         <activity android:name=".PlayListActivity" />
         <activity android:name=".SetUpIDActivity" />

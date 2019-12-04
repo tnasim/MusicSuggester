@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="moodList">
+        <item>Angry</item>
+        <item>Apathetic</item>
+        <item>Frustrated</item>
+        <item>Happy</item>
+        <item>Sad</item>
+        <item>Stressed</item>
+    </string-array>
+</resources>

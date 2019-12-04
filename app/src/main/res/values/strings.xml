@@ -21,4 +21,6 @@
     <string name="titleLabelName">Music Suggestor</string>
     <string name="setVolumeText">Set the Volume:</string>
     <string name="setSpeedText">Set Music Speed:</string>
+    <string name="moodSelectLabel">Select Your Mood:</string>
+    <string name="goToMood">Set Current Mood</string>
 </resources>
