@@ -42,4 +42,5 @@ public class Song {
 	private String name;    // Name of the song
 	private int number;     // Number of the song
 	private String fileLocation = "";
+	private SongCategory category;
 }
