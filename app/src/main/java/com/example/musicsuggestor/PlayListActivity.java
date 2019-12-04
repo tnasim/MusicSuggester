@@ -3,6 +3,8 @@ package com.example.musicsuggestor;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -28,11 +30,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 // Handles play list screen.
 public class PlayListActivity extends AppCompatActivity {
 
 	Spinner spinner;
+	public static SongCategory DEFAULT_SONG_CATEGORY = SongCategory.rest;
+	public static SongCategory currentSongCategory = DEFAULT_SONG_CATEGORY;
 
 	/**
 	 * Initially we have 4 categories and 5 types of user movement-status.
@@ -161,7 +166,7 @@ public class PlayListActivity extends AppCompatActivity {
 			@Override
 			public void run() {
 				try {
-					URL url = new URL("http://10.218.104.158:5000/api/predict_song");
+					URL url = new URL(MainActivity.SERVER_URL+"api/predict_song");
 					HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 					conn.setRequestMethod("POST");
 					conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
@@ -200,6 +205,7 @@ public class PlayListActivity extends AppCompatActivity {
 					final String predictedMovement = jsonData.getString("result");
 					Log.i("INFO", "Result: " + predictedMovement);
 //					Toast.makeText(getApplicationContext(),"Selected movement: ",Toast.LENGTH_SHORT).show();
+					PlayListActivity.currentSongCategory = SongCategory.valueOf(predictedMovement);
 
 					PlayListActivity.this.runOnUiThread(new Runnable() {
 						public void run() {
@@ -266,6 +272,35 @@ public class PlayListActivity extends AppCompatActivity {
 			PlayListActivity.this.runOnUiThread(new Runnable() {
 				public void run() {
 					Toast.makeText(PlayListActivity.this, "Unable to remove: " + songToRemove,Toast.LENGTH_SHORT).show();
+				}
+			});
+		}
+	}
+
+	public void playRandomSong(View view) {
+		int newVolume = 1;  //*** Get new volume from machine learning
+		int newSpeed = 1;   //*** Get new speed from machine learning
+
+		String audioPath;
+		File rootFolder = Environment.getExternalStorageDirectory();
+		String categoryFolder = rootFolder.getPath() + "/songs/" + PlayListActivity.currentSongCategory.getValue() + "/";
+
+		File catFolder = new File(categoryFolder);
+		if(catFolder.exists()) {
+			File[] files = catFolder.listFiles();
+			Random rand = new Random();
+			File file = files[rand.nextInt(files.length)];
+			audioPath = file.getPath();
+			MediaPlayer mediaPlayer = MediaPlayer.create(this, Uri.parse(audioPath));
+			mediaPlayer.setVolume(newVolume, newVolume);
+			mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(newSpeed));
+			mediaPlayer.setLooping(true);
+			mediaPlayer.start();
+			returnToMain(view);
+		} else {
+			PlayListActivity.this.runOnUiThread(new Runnable() {
+				public void run() {
+					Toast.makeText(PlayListActivity.this, "No song available in INTERNAL_STORAGE/songs/ folder",Toast.LENGTH_SHORT).show();
 				}
 			});
 		}

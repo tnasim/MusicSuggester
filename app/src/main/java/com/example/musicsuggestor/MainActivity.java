@@ -29,6 +29,7 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 	public static final String EXTRA_MESSAGE = "com.example.musicsuggestor.LOCATION";
+	public static final String SERVER_URL = "http://10.218.104.158:5000/";
 
 	// Handles when the app is created.
 	@Override protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 						@Override
 						public void run() {
 							try {
-								URL url = new URL("http://10.218.104.158:5000/api/predict_song");
+								URL url = new URL(MainActivity.SERVER_URL+"api/predict_song");
 								HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 								conn.setRequestMethod("POST");
 								conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");

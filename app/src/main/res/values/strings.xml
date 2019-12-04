@@ -8,7 +8,7 @@
     <string name="cancelString">Cancel</string>
     <string name="playListName">Set Up Play List</string>
     <string name="playListLabel">Play List:</string>
-    <string name="playSongButton">Play Song</string>
+    <string name="playRandomSongButton">Play Random Song</string>
     <string name="addSong">Add Song</string>
     <string name="addSongButton">Add Song to Play List</string>
     <string name="removeSongButton">Remove Song from Play List</string>
