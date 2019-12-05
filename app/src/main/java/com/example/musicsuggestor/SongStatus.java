@@ -2,10 +2,10 @@ package com.example.musicsuggestor;
 
 public class SongStatus {
     private int category;
-    private double speed;
-    private double volume;
+    private float speed;
+    private float volume;
 
-    public SongStatus(int category, double speed, double volume) {
+    public SongStatus(int category, float speed, float volume) {
         this.category = category;
         this.speed = speed;
         this.volume = volume;
@@ -19,19 +19,19 @@ public class SongStatus {
         this.category = category;
     }
 
-    public double getSpeed() {
+    public float getSpeed() {
         return speed;
     }
 
-    public void setSpeed(double speed) {
+    public void setSpeed(float speed) {
         this.speed = speed;
     }
 
-    public double getVolume() {
+    public float getVolume() {
         return volume;
     }
 
-    public void setVolume(double volume) {
+    public void setVolume(float volume) {
         this.volume = volume;
     }
 }

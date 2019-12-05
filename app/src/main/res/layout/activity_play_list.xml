@@ -6,6 +6,46 @@
     android:layout_height="match_parent"
     tools:context=".PlayListActivity">
 
+    <ImageButton
+        android:id="@+id/playButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="playOrResume"
+        android:layout_marginTop="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.40"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@null"
+        android:src="@drawable/ic_play_48dp" />
+
+    <ImageButton
+        android:id="@+id/pauseButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="pause"
+        android:visibility="invisible"
+        android:layout_marginTop="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.40"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@null"
+        android:src="@drawable/ic_pause_48dp" />
+
+    <ImageButton
+        android:id="@+id/stopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="stop"
+        android:layout_marginTop="50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.60"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@null"
+        android:src="@drawable/ic_stop_48dp" />
+
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
@@ -19,19 +59,6 @@
         tools:text="@string/setSongTitle" />
 
     <Button
-        android:id="@+id/playRandomSongButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="playRandomSong"
-        android:text="@string/playRandomSongButton"
-        app:layout_constraintBottom_toTopOf="@+id/exitPlayListButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/songNameLabel"
-        app:layout_constraintVertical_bias="0.1" />
-
-    <Button
         android:id="@+id/addSongButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -41,14 +68,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/playRandomSongButton"
-        app:layout_constraintVertical_bias="0.152" />
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:layout_constraintVertical_bias="0.272" />
 
     <Button
         android:id="@+id/removeSongButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="108dp"
         android:onClick="removeSongFromList"
         android:text="@string/removeSongButton"
         app:layout_constraintBottom_toTopOf="@+id/suggestSongButton"
@@ -67,14 +94,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/removeSongButton"
-        app:layout_constraintVertical_bias="0.193" />
+        app:layout_constraintVertical_bias="0.375" />
 
     <TextView
         android:id="@+id/songNameLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/playListLabel"
-        app:layout_constraintBottom_toBottomOf="@+id/playSongButton"
+        app:layout_constraintBottom_toTopOf="@+id/songEditText"
         app:layout_constraintEnd_toStartOf="@+id/songs_spinner"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView"
@@ -98,7 +125,7 @@
         android:layout_height="wrap_content"
         android:layout_weight=".30"
         android:dropDownHeight="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/playRandomSongButton"
+        app:layout_constraintBottom_toTopOf="@+id/addSongButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/songNameLabel"
         app:layout_constraintTop_toBottomOf="@+id/songs_spinner"

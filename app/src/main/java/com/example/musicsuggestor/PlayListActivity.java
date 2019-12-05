@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -36,24 +37,34 @@ import java.util.Random;
 public class PlayListActivity extends AppCompatActivity {
 
 	Spinner spinner;
-	public static SongCategory DEFAULT_SONG_CATEGORY = SongCategory.rest;
+	public static SongCategory DEFAULT_SONG_CATEGORY = SongCategory.study;
 	public static SongCategory currentSongCategory = DEFAULT_SONG_CATEGORY;
+
+	public static MediaPlayer mediaPlayer;
+
+	public static int resumePosition = 0;
+
+	ImageButton playButton;
+	ImageButton pauseButton;
 
 	/**
 	 * Initially we have 4 categories and 5 types of user movement-status.
 	 * Ideally these values should be pulled out from a database and should be personalized for each user.
 	 */
 	public static final Map<String, SongStatus> mapMovementSongStatus = new HashMap<String, SongStatus>() {{
-		put("rest", new SongStatus(1, 1.0, .5));
-		put("walk", new SongStatus(3, 1.25, .75));
-		put("workout", new SongStatus(4, 1.5, 1.0));
-		put("study", new SongStatus(1, 1.0, .6));
-		put("driving", new SongStatus(4, 1.0, 1.0));
+		put("rest", new SongStatus(1, 1.0f, .5f));
+		put("walk", new SongStatus(3, 1.25f, .75f));
+		put("workout", new SongStatus(4, 1.5f, 1.0f));
+		put("study", new SongStatus(1, 1.0f, .6f));
+		put("driving", new SongStatus(4, 1.0f, 1.0f));
 	}};
 
 	@Override protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_play_list);
+
+		playButton = findViewById(R.id.playButton);
+		pauseButton = findViewById(R.id.pauseButton);
 
 		loadSavedPlaylist();
 
@@ -277,32 +288,74 @@ public class PlayListActivity extends AppCompatActivity {
 		}
 	}
 
-	public void playRandomSong(View view) {
-		int newVolume = 1;  //*** Get new volume from machine learning
-		int newSpeed = 1;   //*** Get new speed from machine learning
+	public void playOrResume(View view) {
+		Log.d("DEBUG", "SEEK Position: " + resumePosition);
+		if(mediaPlayer == null) {
+			SongStatus songStatus = getSongStatusBasedOnMovementType(PlayListActivity.currentSongCategory.toString());
 
-		String audioPath;
-		File rootFolder = Environment.getExternalStorageDirectory();
-		String categoryFolder = rootFolder.getPath() + "/songs/" + PlayListActivity.currentSongCategory.getValue() + "/";
+			float newVolume = songStatus.getVolume();  //*** Get new volume from machine learning
+			float newSpeed = songStatus.getSpeed();   //*** Get new speed from machine learning
 
-		File catFolder = new File(categoryFolder);
-		if(catFolder.exists()) {
-			File[] files = catFolder.listFiles();
-			Random rand = new Random();
-			File file = files[rand.nextInt(files.length)];
-			audioPath = file.getPath();
-			MediaPlayer mediaPlayer = MediaPlayer.create(this, Uri.parse(audioPath));
-			mediaPlayer.setVolume(newVolume, newVolume);
-			mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(newSpeed));
-			mediaPlayer.setLooping(true);
-			mediaPlayer.start();
-			returnToMain(view);
-		} else {
-			PlayListActivity.this.runOnUiThread(new Runnable() {
-				public void run() {
-					Toast.makeText(PlayListActivity.this, "No song available in INTERNAL_STORAGE/songs/ folder",Toast.LENGTH_SHORT).show();
+			String audioPath;
+			File rootFolder = Environment.getExternalStorageDirectory();
+			String categoryFolder = rootFolder.getPath() + "/songs/" + PlayListActivity.currentSongCategory.getValue() + "/";
+
+			File catFolder = new File(categoryFolder);
+			if(catFolder.exists()) {
+				File[] files = catFolder.listFiles();
+				Random rand = new Random();
+				File file = files[rand.nextInt(files.length)];
+				audioPath = file.getPath();
+				mediaPlayer = MediaPlayer.create(this, Uri.parse(audioPath));
+				mediaPlayer.setVolume(newVolume, newVolume);
+				mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(newSpeed));
+				mediaPlayer.setLooping(true);
+				mediaPlayer.start();
+			} else {
+				PlayListActivity.this.runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(PlayListActivity.this, "No song available in INTERNAL_STORAGE/songs/ folder",Toast.LENGTH_SHORT).show();
+					}
+				});
+				return;
+			}
+		} else if (!mediaPlayer.isPlaying()) {
+			Log.d("DEBUG", "Setting Media Player seek position to : " + resumePosition);
+			if(resumePosition == 0) {
+				try {
+					mediaPlayer.prepare();
+				} catch (IOException ioex) {
+					Log.e("ERROR", "Error while preparing song: " + ioex);
 				}
-			});
+			}
+			mediaPlayer.seekTo(resumePosition);
+		}
+
+		mediaPlayer.start();
+
+		pauseButton.setVisibility(view.VISIBLE);
+		pauseButton.bringToFront();
+		playButton.setVisibility(view.INVISIBLE);
+	}
+
+	public void stop(View view) {
+		if (mediaPlayer == null) return;
+		if (mediaPlayer.isPlaying()) {
+			mediaPlayer.stop();
+			resumePosition = 0;
+			playButton.setVisibility(view.VISIBLE);
+			playButton.bringToFront();
+			pauseButton.setVisibility(view.INVISIBLE);
+		}
+	}
+
+	public void pause(View view) {
+		if (mediaPlayer.isPlaying()) {
+			mediaPlayer.pause();
+			resumePosition = mediaPlayer.getCurrentPosition();
+			playButton.setVisibility(view.VISIBLE);
+			playButton.bringToFront();
+			pauseButton.setVisibility(view.INVISIBLE);
 		}
 	}
 
