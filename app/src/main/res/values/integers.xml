@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="maxPct">100</integer>
+    <integer name="maxPct">200</integer>
 </resources>

@@ -59,6 +59,9 @@ public class PlayListActivity extends AppCompatActivity {
 		put("driving", new SongStatus(4, 1.0f, 1.0f));
 	}};
 
+	public static float currentVolume = getSongStatusBasedOnMovementType(PlayListActivity.currentSongCategory.toString()).getVolume();
+	public static float currentSpeed = getSongStatusBasedOnMovementType(PlayListActivity.currentSongCategory.toString()).getSpeed();
+
 	@Override protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_play_list);
@@ -69,10 +72,11 @@ public class PlayListActivity extends AppCompatActivity {
 		loadSavedPlaylist();
 
 		spinner = (Spinner) findViewById(R.id.songs_spinner);
-		String[] songs = new String[3];
+
+		/*String[] songs = new String[3];
 		songs[0] = "song1";
 		songs[1] = "song2";
-		songs[2] = "song3";
+		songs[2] = "song3";*/
 
 		if(songList.getSize() == 0) {
 			Log.d("DEBUG", "====== song list empty ========");
@@ -94,6 +98,18 @@ public class PlayListActivity extends AppCompatActivity {
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
 		spinner.setAdapter(adapter);
+	}
+
+	public static void updateSpeed() {
+		if(mediaPlayer != null) {
+			mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
+		}
+	}
+
+	public static void updateVolume() {
+		if(mediaPlayer != null) {
+			mediaPlayer.setVolume(currentVolume, currentVolume);
+		}
 	}
 
 	/**
@@ -172,7 +188,7 @@ public class PlayListActivity extends AppCompatActivity {
 		Log.d("DEBUG", "Playlist saved.");
 	}
 
-	public void predictUserStatus(View view) {
+	public void predictUserStatus(final View view) {
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -227,6 +243,11 @@ public class PlayListActivity extends AppCompatActivity {
 					conn.disconnect();
 				} catch (Exception e) {
 					e.printStackTrace();
+					PlayListActivity.this.runOnUiThread(new Runnable() {
+						public void run() {
+							Toast.makeText(PlayListActivity.this, "Problem connecting to the server.",Toast.LENGTH_SHORT).show();
+						}
+					});
 				}
 			}
 		});
@@ -293,8 +314,8 @@ public class PlayListActivity extends AppCompatActivity {
 		if(mediaPlayer == null) {
 			SongStatus songStatus = getSongStatusBasedOnMovementType(PlayListActivity.currentSongCategory.toString());
 
-			float newVolume = songStatus.getVolume();  //*** Get new volume from machine learning
-			float newSpeed = songStatus.getSpeed();   //*** Get new speed from machine learning
+			currentVolume = songStatus.getVolume();  //*** Get new volume from machine learning
+			currentSpeed = songStatus.getSpeed();   //*** Get new speed from machine learning
 
 			String audioPath;
 			File rootFolder = Environment.getExternalStorageDirectory();
@@ -307,8 +328,8 @@ public class PlayListActivity extends AppCompatActivity {
 				File file = files[rand.nextInt(files.length)];
 				audioPath = file.getPath();
 				mediaPlayer = MediaPlayer.create(this, Uri.parse(audioPath));
-				mediaPlayer.setVolume(newVolume, newVolume);
-				mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(newSpeed));
+				mediaPlayer.setVolume(currentVolume, currentVolume);
+				mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
 				mediaPlayer.setLooping(true);
 				mediaPlayer.start();
 			} else {
@@ -357,6 +378,13 @@ public class PlayListActivity extends AppCompatActivity {
 			playButton.bringToFront();
 			pauseButton.setVisibility(view.INVISIBLE);
 		}
+	}
+
+	public void resetPlayer(View view) {
+		stop(view);
+		mediaPlayer = null;
+		playOrResume(view);
+
 	}
 
 	// Handles when user wants to name the current location.
