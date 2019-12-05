@@ -124,6 +124,10 @@ public class PlayListActivity extends AppCompatActivity {
 		}
 	}
 
+	public static void addSong(Song song) {
+		songList.AddSong(song);
+	}
+
 	/**
 	 * Load the playlist from file
 	 */
@@ -151,8 +155,10 @@ public class PlayListActivity extends AppCompatActivity {
 					String[] values = line.split(",");
 					String name = values[0];
 					int number = Integer.parseInt(values[1]);
+					String path = values[2];
+					SongCategory category = SongCategory.valueOf(values[3]);
 					Log.d("DEBUG", "Adding song: " + name);
-					songList.AddSong(new Song(name, number));
+					songList.AddSong(new Song(name, number, path, category));
 
 					line = reader.readLine();
 				}
@@ -183,7 +189,7 @@ public class PlayListActivity extends AppCompatActivity {
 			PrintWriter pw = new PrintWriter(f);
 			for(Song song: songList.getSongList()) {
 				Log.d("DEBUG","song: " + song.GetName());
-				pw.append(song.GetName() + "," + song.GetSongNumber());
+				pw.append(song.GetName() + "," + song.GetSongNumber() + "," + song.getFileLocation() + "," + song.getCategory());
 				pw.append('\n');
 			}
 			pw.flush();
@@ -271,7 +277,7 @@ public class PlayListActivity extends AppCompatActivity {
 		return mapMovementSongStatus.get(movementType);
 	}
 
-	private static PlayList songList;
+	public static PlayList songList;
 	// Handles adding of location and returning to main screen.
 	public void addSongToList(View view) {
 

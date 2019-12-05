@@ -24,4 +24,5 @@
     <string name="setSpeedText">Set Music Speed:</string>
     <string name="moodSelectLabel">Select Your Mood:</string>
     <string name="goToMood">Set Current Mood</string>
+    <string name="downloadSongs">Download Sample Songs</string>
 </resources>

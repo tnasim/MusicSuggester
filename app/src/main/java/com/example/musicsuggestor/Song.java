@@ -16,9 +16,10 @@ public class Song {
 		fileLocation = "";
 	}
 
-	public Song(String newName, int newNumber, String location) {
+	public Song(String newName, int newNumber, String location, SongCategory category) {
 		this(newName, newNumber);
 		fileLocation = location;
+		this.category = category;
 	}
 
 	// Returns the name of the song.
@@ -33,6 +34,14 @@ public class Song {
 
 	public String getFileLocation() {
 		return fileLocation;
+	}
+
+	public SongCategory getCategory() {
+		return category;
+	}
+
+	public void setCategory(SongCategory category) {
+		this.category = category;
 	}
 
 	public void setFileLocation(String fileLocation) {

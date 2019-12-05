@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="songUriList">
+        <item>1|Something Just Like This|https://d.mp3-send.com/YuWBZB:bJx1rB</item>
+        <item>1|Kotobaro Bhebechinu|https://d.mp3-send.com/NxcVvB:AEy1rB</item>
+        <item>1|Badolo Dinero Prothomo Kodomo Phool|https://d.mp3-send.com/CXCruH:VDHAAB</item>
+        <item>2|SoundHelix-Song-3|https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3</item>
+        <item>2|SoundHelix-Song-4|https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3</item>
+        <item>2|Vivaldi Sonata|http://www.hochmuth.com/mp3/Vivaldi_Sonata_eminor_.mp3</item>
+        <item>3|Tchaikovsky Rococo|http://www.hochmuth.com/mp3/Tchaikovsky_Rococo_Var_orch.mp3</item>
+        <item>3|Tchaikovsky Nocturne|http://www.hochmuth.com/mp3/Tchaikovsky_Nocturne__orch.mp3</item>
+        <item>3|Bikalam|https://d.mp3-send.com/ytcVvB:eWa1rB</item>
+        <item>4|Age of Loneliness - Enigma|https://d.mp3-send.com/HvWBZB:Yk11rB</item>
+        <item>4|Sadness - Enigma|https://d.mp3-send.com/xuWBZB:zMjAsB</item>
+        <item>5|Country Roads|https://d.mp3-send.com/2uWBZB:PCt1rB</item>
+        <item>5|Du Hast - Rammstein|https://d.mp3-send.com/zuWBZB:ZAn3rB</item>
+        <item>5|Yuhi Chala Chal Rahi|https://d.mp3-send.com/cuWBZB:FMZ2rB</item>
+    </string-array>
+</resources>

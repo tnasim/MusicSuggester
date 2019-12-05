@@ -5,6 +5,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.DownloadManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,23 +15,36 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 	public static final String EXTRA_MESSAGE = "com.example.musicsuggestor.LOCATION";
 	public static final String SERVER_URL = "http://10.218.104.158:5000/";
+
+	private ProgressDialog progressDialog;
 
 	// Handles when the app is created.
 	@Override protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +79,33 @@ public class MainActivity extends AppCompatActivity {
 					new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
 					1);
 		}
+
+		btn_download_songs = findViewById(R.id.btnDownloadSongs);
+		btn_download_songs.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				String[] songList = getResources().getStringArray(R.array.songUriList);
+				progressDialog = new ProgressDialog(MainActivity.this);
+				progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				progressDialog.setMessage("Downloading ...");
+				progressDialog.setCancelable(false);
+				progressDialog.setMax(songList.length);
+				progressDialog.show();
+
+				/*for(String line: songList) {
+					String[] splitted = line.split("\\|");
+					String songUri = splitted[2];
+					String songName = splitted[1];
+					String songCategory = splitted[0];
+					Song song = new Song()
+				}*/
+				String line = songList[0]; // The first line
+				String[] splitted = line.split("\\|");
+				String songUri = splitted[2];
+
+				new DownloadFile(songList, 0).execute(songUri);
+			}
+		});
 
 		// Set up the location handling (if allowed).
 		if (checkPermission("ACCESS_FINE_LOCATION", 0, 0) == PackageManager.PERMISSION_GRANTED) {
@@ -123,7 +165,9 @@ public class MainActivity extends AppCompatActivity {
 
 								SongStatus songStatus = PlayListActivity.getSongStatusBasedOnMovementType(predictedMovement);
 
-								// TODO Select a song from the suggested category (songStatus.getCategory() ) and set speed and volume suggested based on the predictedMovement.
+								PlayListActivity.currentSpeed = songStatus.getSpeed();
+								PlayListActivity.currentVolume = songStatus.getVolume();
+								PlayListActivity.currentSongCategory = SongCategory.valueOf(predictedMovement);
 
 								conn.disconnect();
 							} catch (Exception e) {
@@ -133,16 +177,7 @@ public class MainActivity extends AppCompatActivity {
 					});
 
 					// TODO Handle updates based on new location/speed.
-/***
- mediaPlayer (and possibly playbackParams) needs to be set up elsewhere, but this would be how to change the volume and speed.
- Note that setPlaybackParams requires API level of at least 23.
- This code will need called in the appropriate location in AdjustmentActivity as well.
-					int newVolume = 1;  //*** Get new volume from machine learning
-					int newSpeed = 1;   //*** Get new speed from machine learning
-					MediaPlayer mediaPlayer = new MediaPlayer();
-					mediaPlayer.setVolume(newVolume, newVolume);
-					mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(newSpeed));
-*/				}
+				}
 
 				// Handles when the provider is disabled.
 				@Override
@@ -230,7 +265,151 @@ public class MainActivity extends AppCompatActivity {
 		startActivity(intent);
 	}
 
+	private class DownloadFile extends AsyncTask<String, String, String> {
+
+//		private ProgressDialog progressDialog;
+		private String fileName;
+		private String folder;
+		private String category;
+		private int currentIndex;
+		private boolean isDownloaded;
+		private String[] songs;
+
+		public DownloadFile(String[] songList, int currentIndex) {
+
+			this.currentIndex = currentIndex;
+			progressDialog.setProgress(currentIndex+1);
+
+			songs = new String[songList.length];
+			System.arraycopy(songList, 0, songs, 0, songList.length);
+
+			String[] splitted = songList[currentIndex].split("\\|");
+			this.fileName = splitted[1];
+			this.category = splitted[0];
+			String filePath = Environment.getExternalStorageDirectory() + File.separator + "songs" + File.separator + this.category + File.separator + fileName + ".mp3";
+
+			SongCategory cat;
+			switch (Integer.parseInt(category)) {
+				case 1:
+					cat = SongCategory.rest;
+					break;
+				case 2:
+					cat = SongCategory.walk;
+					break;
+				case 3:
+					cat = SongCategory.workout;
+					break;
+				case 4:
+					cat = SongCategory.study;
+					break;
+				case 5:
+					cat = SongCategory.driving;
+					default:
+						cat = SongCategory.rest;
+			}
+
+			PlayListActivity.addSong(new Song(fileName, this.currentIndex+1, filePath, cat));
+		}
+
+		/**
+		 * Before starting background thread
+		 * Show Progress Bar Dialog
+		 */
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+
+		/**
+		 * Downloading file in background thread
+		 */
+		@Override
+		protected String doInBackground(String... f_url) {
+			int count;
+			try {
+				URL url = new URL(f_url[0]);
+				URLConnection connection = url.openConnection();
+				connection.connect();
+				int lengthOfFile = connection.getContentLength();
+
+
+				// input stream to read file - with 8k buffer
+				InputStream input = new BufferedInputStream(url.openStream(), 8192);
+
+				//External directory path to save file
+				folder = Environment.getExternalStorageDirectory() + File.separator + "songs" + File.separator + this.category + File.separator;
+
+				//Create androiddeft folder if it does not exist
+				File directory = new File(folder);
+
+				if (!directory.exists()) {
+					directory.mkdirs();
+				}
+
+				// Output stream to write file
+				OutputStream output = new FileOutputStream(folder + fileName + ".mp3");
+
+				byte data[] = new byte[1024];
+
+				long total = 0;
+
+				while ((count = input.read(data)) != -1) {
+					total += count;
+					// publishing the progress....
+					// After this onProgressUpdate will be called
+					publishProgress("" + (int) ((total * 100) / lengthOfFile));
+					Log.d("DEBUG", "Progress: " + (int) ((total * 100) / lengthOfFile));
+
+					// writing data to file
+					output.write(data, 0, count);
+				}
+
+				// flushing output
+				output.flush();
+
+				// closing streams
+				output.close();
+				input.close();
+				return "Downloaded at: " + folder + fileName;
+
+			} catch (Exception e) {
+				Log.e("Error: ", e.getMessage());
+			}
+
+			return "Something went wrong";
+		}
+
+		/**
+		 * Updating progress bar
+		 */
+		protected void onProgressUpdate(String... progress) {
+			// setting progress percentage
+//			progressDialog.setProgress(Integer.parseInt(progress[0]));
+		}
+
+
+		@Override
+		protected void onPostExecute(String message) {
+			// dismiss the dialog after the file was downloaded
+//			this.progressDialog.dismiss();
+			if(this.currentIndex < songs.length-1) {
+				String line = songs[currentIndex + 1]; // take the next song
+				String[] splitted = line.split("\\|");
+				String songUri = splitted[2];
+				new DownloadFile(songs, currentIndex + 1).execute(songUri);
+			} else {
+				PlayListActivity.savePlaylist();
+				progressDialog.dismiss();
+			}
+
+			Toast.makeText(getApplicationContext(),
+					message, Toast.LENGTH_LONG).show();
+		}
+	}
+
 	LocationManager locManager;     // Manages locations
 	LocationListener locListener;   // Listener for location changes
 	Location curLocation;           // Current location
+
+	Button btn_download_songs;
 }
