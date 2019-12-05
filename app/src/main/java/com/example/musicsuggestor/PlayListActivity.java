@@ -69,6 +69,18 @@ public class PlayListActivity extends AppCompatActivity {
 		playButton = findViewById(R.id.playButton);
 		pauseButton = findViewById(R.id.pauseButton);
 
+		if(mediaPlayer!=null) {
+			if(mediaPlayer.isPlaying()) {
+				pauseButton.setVisibility(View.VISIBLE);
+				pauseButton.bringToFront();
+				playButton.setVisibility(View.INVISIBLE);
+			} else {
+				playButton.setVisibility(View.VISIBLE);
+				playButton.bringToFront();
+				pauseButton.setVisibility(View.INVISIBLE);
+			}
+		}
+
 		loadSavedPlaylist();
 
 		spinner = (Spinner) findViewById(R.id.songs_spinner);
