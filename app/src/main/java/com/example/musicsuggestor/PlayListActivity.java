@@ -125,6 +125,9 @@ public class PlayListActivity extends AppCompatActivity {
 	}
 
 	public static void addSong(Song song) {
+		if(songList == null) {
+			songList = new PlayList();
+		}
 		songList.AddSong(song);
 	}
 

@@ -42,7 +42,8 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 	public static final String EXTRA_MESSAGE = "com.example.musicsuggestor.LOCATION";
-	public static final String SERVER_URL = "http://10.218.104.158:5000/";
+//	public static final String SERVER_URL = "http://10.218.104.158:5000/";
+	public static final String SERVER_URL = "http://18.188.169.30:5000/"; // EC2 server
 
 	private ProgressDialog progressDialog;
 
