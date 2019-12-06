@@ -37,7 +37,7 @@ import java.util.Random;
 public class PlayListActivity extends AppCompatActivity {
 
 	Spinner spinner;
-	public static SongCategory DEFAULT_SONG_CATEGORY = SongCategory.study;
+	public static SongCategory DEFAULT_SONG_CATEGORY = SongCategory.rest;
 	public static SongCategory currentSongCategory = DEFAULT_SONG_CATEGORY;
 
 	public static MediaPlayer mediaPlayer;
@@ -209,73 +209,6 @@ public class PlayListActivity extends AppCompatActivity {
 		Log.d("DEBUG", "Playlist saved.");
 	}
 
-	public void predictUserStatus(final View view) {
-		Thread thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					URL url = new URL(MainActivity.SERVER_URL+"api/predict_song");
-					HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-					conn.setRequestMethod("POST");
-					conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-					conn.setRequestProperty("Accept","application/json");
-					conn.setDoOutput(true);
-					conn.setDoInput(true);
-
-					JSONObject jsonParam = new JSONObject();
-					jsonParam.put("location", 1);
-					jsonParam.put("time", 1);
-					jsonParam.put("movement", 1);
-
-					Log.i("JSON", jsonParam.toString());
-					DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-					//os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
-					os.writeBytes(jsonParam.toString());
-
-					os.flush();
-					os.close();
-
-					Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-					Log.i("MSG" , conn.getResponseMessage());
-
-					InputStream stream = conn.getInputStream();
-
-					BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
-
-					StringBuffer stringBuffer = new StringBuffer();
-					String line;
-					while ((line = bufferedReader.readLine()) != null)
-					{
-						stringBuffer.append(line);
-					}
-
-					JSONObject jsonData =  new JSONObject(stringBuffer.toString());
-					final String predictedMovement = jsonData.getString("result");
-					Log.i("INFO", "Result: " + predictedMovement);
-//					Toast.makeText(getApplicationContext(),"Selected movement: ",Toast.LENGTH_SHORT).show();
-					PlayListActivity.currentSongCategory = SongCategory.valueOf(predictedMovement);
-
-					PlayListActivity.this.runOnUiThread(new Runnable() {
-						public void run() {
-							Toast.makeText(PlayListActivity.this, "Selected movement: " + predictedMovement,Toast.LENGTH_SHORT).show();
-						}
-					});
-
-					conn.disconnect();
-				} catch (Exception e) {
-					e.printStackTrace();
-					PlayListActivity.this.runOnUiThread(new Runnable() {
-						public void run() {
-							Toast.makeText(PlayListActivity.this, "Problem connecting to the server.",Toast.LENGTH_SHORT).show();
-						}
-					});
-				}
-			}
-		});
-
-		thread.start();
-	}
-
 	public static SongStatus getSongStatusBasedOnMovementType(String movementType) {
 		return mapMovementSongStatus.get(movementType);
 	}
@@ -342,6 +275,7 @@ public class PlayListActivity extends AppCompatActivity {
 			File rootFolder = Environment.getExternalStorageDirectory();
 			String categoryFolder = rootFolder.getPath() + "/songs/" + PlayListActivity.currentSongCategory.getValue() + "/";
 
+			Log.d("DEBUG", "============= categoryFolder: " + categoryFolder);
 			File catFolder = new File(categoryFolder);
 			if(catFolder.exists()) {
 				File[] files = catFolder.listFiles();

@@ -10,6 +10,7 @@ import android.widget.AutoCompleteTextView;
 
 // Handles setting up location names.
 public class SetUpIDActivity extends AppCompatActivity {
+
 	@Override protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_set_up_id);

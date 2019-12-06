@@ -10,6 +10,11 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -19,6 +24,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -47,12 +53,22 @@ public class MainActivity extends AppCompatActivity {
 
 	private ProgressDialog progressDialog;
 
+	public static int currentMovementStatus = 1; // 1 == stationary, 2 = slow, 3 = fast
+
+	public static long lastUpdate = System.currentTimeMillis();
+
 	// Handles when the app is created.
 	@Override protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-//		PlayListActivity.loadSavedPlaylist();
+
+		if (android.os.Build.VERSION.SDK_INT > 9)
+		{
+			StrictMode.ThreadPolicy policy = new
+					StrictMode.ThreadPolicy.Builder().permitAll().build();
+			StrictMode.setThreadPolicy(policy);
+		}
 
 		if (ContextCompat.checkSelfPermission(MainActivity.this,
 				Manifest.permission.ACCESS_FINE_LOCATION)
@@ -93,13 +109,6 @@ public class MainActivity extends AppCompatActivity {
 				progressDialog.setMax(songList.length);
 				progressDialog.show();
 
-				/*for(String line: songList) {
-					String[] splitted = line.split("\\|");
-					String songUri = splitted[2];
-					String songName = splitted[1];
-					String songCategory = splitted[0];
-					Song song = new Song()
-				}*/
 				String line = songList[0]; // The first line
 				String[] splitted = line.split("\\|");
 				String songUri = splitted[2];
@@ -114,68 +123,44 @@ public class MainActivity extends AppCompatActivity {
 				// Handles when the location changes.
 				@Override
 				public void onLocationChanged(Location loc) {
-					int userSpeed = (int)curLocation.getSpeed();    // Get the speed in meters/second
+					long currentTime = System.currentTimeMillis();
+					long timeDiffInSeconds = (((currentTime - lastUpdate)/1000));
+					final float changeInLocation = curLocation.distanceTo(loc);
+					final float userSpeed = changeInLocation/timeDiffInSeconds; // meter per second: e.g. walking speed average 1.4 m/s
+
+					if(userSpeed < 0.5) {
+						currentMovementStatus = 1;
+					} else if (userSpeed < 1.5) {
+						currentMovementStatus = 2;
+					} else {
+						currentMovementStatus = 3;
+					}
 
 					// Get the actual location.
 					curLocation = UserLocation.GetActualLocation(loc);
 					UserLocation.setCurrentLocation(curLocation);
 
-					// TODO reuse the code from PlayListActivity.java
-					Thread thread = new Thread(new Runnable() {
-						@Override
-						public void run() {
-							try {
-								URL url = new URL(MainActivity.SERVER_URL+"api/predict_song");
-								HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-								conn.setRequestMethod("POST");
-								conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-								conn.setRequestProperty("Accept","application/json");
-								conn.setDoOutput(true);
-								conn.setDoInput(true);
+					if (timeDiffInSeconds/60.0 > 1.0 && changeInLocation > UserLocation.SAME_LOCATION_DISTANCE) { // If location change happens within at least 1 minute.
 
-								JSONObject jsonParam = new JSONObject();
-								jsonParam.put("location", 1);
-								jsonParam.put("time", UserLocation.getCurrentTime());
-								jsonParam.put("movement", UserLocation.getUserMobilityStatus());
+						MainActivity.this.runOnUiThread(new Runnable() {
+							public void run() {
+								Toast.makeText(MainActivity.this, "Speed: " + userSpeed + "; distanceChange: " + changeInLocation + "m; Updating Location ...",Toast.LENGTH_SHORT).show();
+							}
+						});
 
-								Log.i("JSON", jsonParam.toString());
-								DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-								//os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
-								os.writeBytes(jsonParam.toString());
-
-								os.flush();
-								os.close();
-
-								Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-								Log.i("MSG" , conn.getResponseMessage());
-
-								InputStream stream = conn.getInputStream();
-
-								BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
-
-								StringBuffer stringBuffer = new StringBuffer();
-								String line;
-								while ((line = bufferedReader.readLine()) != null)
-								{
-									stringBuffer.append(line);
-								}
-
-								JSONObject jsonData =  new JSONObject(stringBuffer.toString());
-								final String predictedMovement = jsonData.getString("result");
-								Log.i("INFO", "Result: " + predictedMovement);
+						Thread thread = new Thread(new Runnable() {
+							@Override
+							public void run() {
+								final String predictedMovement = getPredictedMovement();
 
 								SongStatus songStatus = PlayListActivity.getSongStatusBasedOnMovementType(predictedMovement);
 
 								PlayListActivity.currentSpeed = songStatus.getSpeed();
 								PlayListActivity.currentVolume = songStatus.getVolume();
 								PlayListActivity.currentSongCategory = SongCategory.valueOf(predictedMovement);
-
-								conn.disconnect();
-							} catch (Exception e) {
-								e.printStackTrace();
 							}
-						}
-					});
+						});
+					}
 
 					// TODO Handle updates based on new location/speed.
 				}
@@ -205,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 			c.setCostAllowed(true);
 			c.setPowerRequirement(Criteria.POWER_HIGH);
 
-			LocationManager locManager =
+			locManager =
 					(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
 			final boolean gpsEnabled = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -217,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
 			String bestProvider = locManager.getBestProvider(c, true);
 			Log.d("DEBUG", "========== bestProvider: " + bestProvider);
 
+
 			// If no suitable provider is found, null is returned.
 			if (bestProvider == null) {
 				Log.d("DEBUG", "==== location provider not found");
@@ -224,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
 			} else {
 
 				// Set the current location and the listener for location/speed updates.
-//				Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
+				Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
 				curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation(bestProvider));
 				UserLocation.setCurrentLocation(curLocation);
 			}
@@ -232,15 +218,63 @@ public class MainActivity extends AppCompatActivity {
 		}
 	}
 
+	private String getPredictedMovement() {
+		final String predictedMovement;
+		HttpURLConnection conn = null;
+		try {
+			URL url = new URL(MainActivity.SERVER_URL + "api/predict_song");
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+			conn.setRequestProperty("Accept", "application/json");
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+
+			JSONObject jsonParam = new JSONObject();
+			jsonParam.put("location", 1);
+			jsonParam.put("time", UserLocation.getCurrentTime());
+			jsonParam.put("movement", UserLocation.getUserMobilityStatus());
+
+			Log.i("JSON", jsonParam.toString());
+			DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+			//os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+			os.writeBytes(jsonParam.toString());
+
+			os.flush();
+			os.close();
+
+			Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+			Log.i("MSG", conn.getResponseMessage());
+
+			InputStream stream = conn.getInputStream();
+
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
+
+			StringBuffer stringBuffer = new StringBuffer();
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				stringBuffer.append(line);
+			}
+
+			JSONObject jsonData = new JSONObject(stringBuffer.toString());
+			predictedMovement = jsonData.getString("result");
+			Log.i("INFO", "Result: " + predictedMovement);
+		} catch(Exception e) {
+			e.printStackTrace();
+			Log.e("CONN", "Unable to connect to the server");
+			return PlayListActivity.DEFAULT_SONG_CATEGORY.toString();
+		} finally {
+			if(conn != null) {
+				conn.disconnect();
+			}
+		}
+
+		return predictedMovement;
+	}
+
 	// Handles when user wants to go to the play list.
 	public void sendToPlayList(View view) {
 		Intent intent = new Intent(this, PlayListActivity.class);
-		startActivity(intent);
-	}
-
-	// Handles when user wants to get a song suggestion.
-	public void sendToSongSuggester(View view) {
-		Intent intent = new Intent(this, SuggestionActivity.class);
 		startActivity(intent);
 	}
 
@@ -260,10 +294,83 @@ public class MainActivity extends AppCompatActivity {
 	public void sendToLocations(View view) {
 		Intent intent = new Intent(this, SetUpIDActivity.class);
 
+		if(curLocation == null) {
+			curLocation = getLastBestLocation();
+		}
+
+		if(curLocation == null) {
+			curLocation = UserLocation.DEFAULT_LOCATION;
+		}
+
 		// Add the current location to the intent.
 		intent.putExtra("latitude", curLocation.getLatitude());
 		intent.putExtra("longitude", curLocation.getLongitude());
 		startActivity(intent);
+	}
+
+	/**
+	 * @return the last know best location
+	 */
+	private Location getLastBestLocation() {
+		if (ContextCompat.checkSelfPermission(MainActivity.this,
+				Manifest.permission.ACCESS_FINE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED) {
+
+			ActivityCompat.requestPermissions(MainActivity.this,
+					new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+					1);
+		}
+
+		if (checkPermission("ACCESS_FINE_LOCATION", 0, 0) == PackageManager.PERMISSION_GRANTED) {
+			Location locationGPS = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+			Location locationNet = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+			long GPSLocationTime = 0;
+			if (null != locationGPS) { GPSLocationTime = locationGPS.getTime(); }
+
+			long NetLocationTime = 0;
+
+			if (null != locationNet) {
+				NetLocationTime = locationNet.getTime();
+			}
+
+			if ( 0 < GPSLocationTime - NetLocationTime ) {
+				return locationGPS;
+			}
+			else {
+				return locationNet;
+			}
+		}
+		return null;
+	}
+
+	public void predictUserStatus(final View view) {
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					final String predictedMovement = getPredictedMovement();
+//					Toast.makeText(getApplicationContext(),"Selected movement: ",Toast.LENGTH_SHORT).show();
+					PlayListActivity.currentSongCategory = SongCategory.valueOf(predictedMovement);
+
+					MainActivity.this.runOnUiThread(new Runnable() {
+						public void run() {
+							Toast.makeText(MainActivity.this, "Selected movement: " + predictedMovement,Toast.LENGTH_SHORT).show();
+						}
+					});
+
+				} catch (Exception e) {
+					e.printStackTrace();
+					MainActivity.this.runOnUiThread(new Runnable() {
+						public void run() {
+							Toast.makeText(MainActivity.this, "Problem connecting to the server.",Toast.LENGTH_SHORT).show();
+						}
+					});
+				}
+			}
+		});
+
+		thread.start();
 	}
 
 	private class DownloadFile extends AsyncTask<String, String, String> {
@@ -287,6 +394,7 @@ public class MainActivity extends AppCompatActivity {
 			String[] splitted = songList[currentIndex].split("\\|");
 			this.fileName = splitted[1];
 			this.category = splitted[0];
+
 			String filePath = Environment.getExternalStorageDirectory() + File.separator + "songs" + File.separator + this.category + File.separator + fileName + ".mp3";
 
 			SongCategory cat;
@@ -333,45 +441,64 @@ public class MainActivity extends AppCompatActivity {
 				connection.connect();
 				int lengthOfFile = connection.getContentLength();
 
+				if (ContextCompat.checkSelfPermission(MainActivity.this,
+						Manifest.permission.WRITE_EXTERNAL_STORAGE)
+						!= PackageManager.PERMISSION_GRANTED) {
 
-				// input stream to read file - with 8k buffer
-				InputStream input = new BufferedInputStream(url.openStream(), 8192);
-
-				//External directory path to save file
-				folder = Environment.getExternalStorageDirectory() + File.separator + "songs" + File.separator + this.category + File.separator;
-
-				//Create androiddeft folder if it does not exist
-				File directory = new File(folder);
-
-				if (!directory.exists()) {
-					directory.mkdirs();
+					ActivityCompat.requestPermissions(MainActivity.this,
+							new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+							1);
 				}
 
-				// Output stream to write file
-				OutputStream output = new FileOutputStream(folder + fileName + ".mp3");
+				if (checkPermission("WRITE_EXTERNAL_STORAGE", 0, 0) == PackageManager.PERMISSION_GRANTED) {
+					// input stream to read file - with 8k buffer
+					InputStream input = new BufferedInputStream(url.openStream(), 8192);
+					//External directory path to save file
+					folder = Environment.getExternalStorageDirectory() + File.separator + "songs" + File.separator + this.category + File.separator;
 
-				byte data[] = new byte[1024];
+					//Create androiddeft folder if it does not exist
+					File directory = new File(folder);
 
-				long total = 0;
+					/*if(!isExternalStorageWritable()) {
+						Log.e("ERROR", "============== NOT WRITABLE =====================");
+					} else {
+						Log.e("ERROR", "============== WRITABLE =====================");
+					}*/
 
-				while ((count = input.read(data)) != -1) {
-					total += count;
-					// publishing the progress....
-					// After this onProgressUpdate will be called
-					publishProgress("" + (int) ((total * 100) / lengthOfFile));
-					Log.d("DEBUG", "Progress: " + (int) ((total * 100) / lengthOfFile));
+					if (!directory.exists()) {
+						boolean directorycreated = directory.mkdirs();
+						Log.e("ERROR", "============== Error creating directory.mkdirs() =====================");
+					}
 
-					// writing data to file
-					output.write(data, 0, count);
+					// Output stream to write file
+					OutputStream output = new FileOutputStream(folder + fileName + ".mp3");
+
+					byte data[] = new byte[1024];
+
+					long total = 0;
+
+					while ((count = input.read(data)) != -1) {
+						total += count;
+						// publishing the progress....
+						// After this onProgressUpdate will be called
+						publishProgress("" + (int) ((total * 100) / lengthOfFile));
+						Log.d("DEBUG", "Progress: " + (int) ((total * 100) / lengthOfFile));
+
+						// writing data to file
+						output.write(data, 0, count);
+					}
+
+					// flushing output
+					output.flush();
+
+					// closing streams
+					output.close();
+					input.close();
+					return "Downloaded at: " + folder + fileName;
+				} else {
+					Log.e("ERROR", " =================================== Storage Permission Problem. ");
+					return "Storage Permission Problem";
 				}
-
-				// flushing output
-				output.flush();
-
-				// closing streams
-				output.close();
-				input.close();
-				return "Downloaded at: " + folder + fileName;
 
 			} catch (Exception e) {
 				Log.e("Error: ", e.getMessage());
@@ -404,8 +531,14 @@ public class MainActivity extends AppCompatActivity {
 			}
 
 			Toast.makeText(getApplicationContext(),
-					message, Toast.LENGTH_LONG).show();
+					"Downloaded: " + this.fileName, Toast.LENGTH_LONG).show();
 		}
+	}
+
+	/* Checks if external storage is available for read and write */
+	private boolean isExternalStorageWritable() {
+		String state = Environment.getExternalStorageState();
+		return Environment.MEDIA_MOUNTED.equals(state);
 	}
 
 	LocationManager locManager;     // Manages locations

@@ -8,13 +8,23 @@ import java.util.ArrayList;
 public class UserLocation {
 	// Constants - note that distances are in meters.
 	public static final int NO_USER_LOCATION = 0;   // Indicates no user location assigned to this place
-	public static final float SAME_LOCATION_DISTANCE = 40F; // Distance two locations can be within each other and be the same location
+	public static final float SAME_LOCATION_DISTANCE = 5F; // Distance two locations can be within each other and be the same location
 
 	public static Location currentLocation;
 	// Class-level variables
 	private static int nextLocationNumber = 0;      // Number of the next location
 	private static ArrayList<UserLocation> locationList = new ArrayList<UserLocation>();    // List of locations
 	private static ArrayList<String> nameList = new ArrayList<String>();    // List of strings
+
+	public static Location LOC_BYENG = new Location("dummyprovider");
+
+	public static Location DEFAULT_LOCATION;
+
+	static {
+		LOC_BYENG.setLatitude(33.4237075);
+		LOC_BYENG.setLongitude(-111.9396098);
+		DEFAULT_LOCATION = LOC_BYENG;
+	}
 
 	// Constructor for location.  This is private because users should use location numbers instead.
 	private UserLocation(String name, Location newLocation) {

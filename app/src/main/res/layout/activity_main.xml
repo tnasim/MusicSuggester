@@ -12,26 +12,13 @@
         android:layout_height="wrap_content"
         android:onClick="sendToPlayList"
         android:text="@string/goToPlayList"
-        app:layout_constraintBottom_toBottomOf="@+id/suggestSongButton"
+        app:layout_constraintBottom_toBottomOf="@+id/goToAdjustButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.85"
         tools:text="@string/goToPlayList" />
 
-    <Button
-        android:id="@+id/suggestSongButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="sendToSongSuggester"
-        android:text="@string/songSuggestionButton"
-        app:layout_constraintBottom_toTopOf="@+id/goToAdjustButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.49"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goToPlayListButton"
-        app:layout_constraintVertical_bias="0.7"
-        tools:text="@string/songSuggestionButton" />
 
     <Button
         android:id="@+id/goToLocationButton"
@@ -54,7 +41,8 @@
         app:layout_constraintBottom_toTopOf="@+id/goToLocationButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/suggestSongButton" />
+        app:layout_constraintTop_toBottomOf="@+id/goToPlayListButton" />
+
 
     <Button
         android:id="@+id/goToMoodButton"
@@ -68,13 +56,27 @@
         app:layout_constraintTop_toTopOf="@+id/btnDownloadSongs"
         app:layout_constraintVertical_bias="0.95" />
 
+
+    <Button
+        android:id="@+id/predictUserStatusButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:onClick="predictUserStatus"
+        android:text="@string/predictUserStatusButton"
+        app:layout_constraintBottom_toTopOf="@+id/goToMoodButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnDownloadSongs"
+        app:layout_constraintVertical_bias="0.375" />
+
     <Button
         android:id="@+id/btnDownloadSongs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="sendToMoods"
         android:text="@string/downloadSongs"
-        app:layout_constraintBottom_toTopOf="@+id/goToMoodButton"
+        app:layout_constraintBottom_toTopOf="@+id/predictUserStatusButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
