@@ -62,7 +62,7 @@
         android:id="@+id/addSongButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="5dp"
         android:onClick="addSongToList"
         android:text="@string/addSongButton"
         app:layout_constraintBottom_toTopOf="@+id/removeSongButton"
@@ -79,7 +79,6 @@
         android:layout_marginTop="5dp"
         android:onClick="removeSongFromList"
         android:text="@string/removeSongButton"
-        app:layout_constraintBottom_toTopOf="@+id/predictUserStatusButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/addSongButton"
@@ -129,23 +128,34 @@
         android:layout_marginTop="10dp"
         android:onClick="resetPlayer"
         android:text="@string/resetPlayer"
-        app:layout_constraintBottom_toTopOf="@+id/exitPlayListButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/predictUserStatusButton"
+        app:layout_constraintTop_toBottomOf="@+id/removeSongButton"
         app:layout_constraintVertical_bias="0.1" />
 
     <Button
         android:id="@+id/exitPlayListButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:onClick="returnToMain"
         android:text="@string/returnToMainScreen"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.518"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/resetPlayer"
+        app:layout_constraintVertical_bias="0.976"/>
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:layout_marginBottom="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.518"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.976"
-        tools:text="@string/returnToMainScreen" />
+        android:text="@string/statusText" />
 </androidx.constraintlayout.widget.ConstraintLayout>

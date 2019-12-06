@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -21,6 +22,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONObject;
@@ -49,6 +51,8 @@ public class PlayListActivity extends AppCompatActivity {
 	public static SongCategory currentSongCategory = DEFAULT_SONG_CATEGORY;
 
 	public static MediaPlayer mediaPlayer;
+
+	public static boolean flagFirstTime = true;
 
 	public static int resumePosition = 0;
 
@@ -81,12 +85,22 @@ public class PlayListActivity extends AppCompatActivity {
 	public static float currentVolume = getSongStatusBasedOnMovementType(PlayListActivity.currentSongCategory.toString()).getVolume();
 	public static float currentSpeed = getSongStatusBasedOnMovementType(PlayListActivity.currentSongCategory.toString()).getSpeed();
 
-	@Override protected void onCreate(Bundle savedInstanceState) {
+	private TextView statusTextView;
+
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_play_list);
 
 		playButton = findViewById(R.id.playButton);
 		pauseButton = findViewById(R.id.pauseButton);
+
+		statusTextView = (TextView) findViewById(R.id.statusText);
+		statusTextView.setVisibility(View.VISIBLE);
+		statusTextView.setBackgroundColor(Color.DKGRAY);
+		statusTextView.setTextColor(Color.WHITE);
 
 		UserLocation.setCurrentLocation(UserLocation.DEFAULT_LOCATION);
 
@@ -106,11 +120,6 @@ public class PlayListActivity extends AppCompatActivity {
 
 		spinner = (Spinner) findViewById(R.id.songs_spinner);
 
-		/*String[] songs = new String[3];
-		songs[0] = "song1";
-		songs[1] = "song2";
-		songs[2] = "song3";*/
-
 		if(songList.getSize() == 0) {
 			Log.d("DEBUG", "====== song list empty ========");
 		}
@@ -125,9 +134,13 @@ public class PlayListActivity extends AppCompatActivity {
 		spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override
 			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-				String songName = parent.getItemAtPosition(position).toString();
-				Log.d("DEBUG", "======================== Song selected : " + songName);
-				playOrResumeSongByName(songName);
+				if(flagFirstTime) {
+					flagFirstTime = false;
+				} else {
+					String songName = parent.getItemAtPosition(position).toString();
+					Log.d("DEBUG", "======================== Song selected : " + songName);
+					playOrResumeSongByName(songName);
+				}
 			}
 
 			@Override
@@ -160,59 +173,40 @@ public class PlayListActivity extends AppCompatActivity {
 					curLocation = UserLocation.GetActualLocation(loc);
 					UserLocation.setCurrentLocation(curLocation);
 					Log.d("DEBUG", "Time Difference: " + timeDiffInSeconds);
-					if (timeDiffInSeconds/60.0 > 1.0 && changeInLocation > UserLocation.SAME_LOCATION_DISTANCE) { // If location change happens within at least half minute.
+//					statusTextView.setText("timeDiff(mins): " + timeDiffInSeconds/60.0f + "; changeInLocation: " + changeInLocation + "m; " + "loc1: " + lastLocation + "; loc2: " + currentLocationNumber);
+					if (timeDiffInSeconds/60.0f > 0.5f && changeInLocation > UserLocation.LOCATION_UPDATE_RANGE) { // If location change happens within at least half minute.
 
-						/*MainActivity.this.runOnUiThread(new Runnable() {
-							public void run() {
-								Toast.makeText(MainActivity.this, "Speed: " + userSpeed + "; distanceChange: " + changeInLocation + "m; Updating Location ...",Toast.LENGTH_SHORT).show();
+						final UserLocation userLoc = UserLocation.GetUserLocation(curLocation);
+						currentLocationNumber = userLoc.GetLocationNumber();
+
+//						statusTextView.setText("Speed: " + userSpeed + "; distChange: " + changeInLocation + "m;" + "l1: " + lastLocation + "; l2: " + currentLocationNumber);
+
+						if(currentLocationNumber != lastLocation) { // check if location changed
+
+							statusTextView.setText("Updating loc: " + userLoc.GetName());
+
+							currentTimeNumber = UserLocation.getCurrentTimeNumber();
+
+							final String predictedMovement = MainActivity.getPredictedMovement(currentLocationNumber, currentTimeNumber, currentMovementStatus);
+
+							SongStatus songStatus = getSongStatusBasedOnMovementType(predictedMovement);
+
+							currentSpeed = songStatus.getSpeed();
+							currentVolume = songStatus.getVolume();
+							currentSongCategory = SongCategory.valueOf(predictedMovement);
+
+							try {
+
+								resetMusicPlayer();
+
+							} catch (Exception e) {
+								Log.e("Error", "Unable to resetMusicPlayer");
 							}
-						});*/
-
-						Thread thread = new Thread(new Runnable() {
-							@Override
-							public void run() {
-								final UserLocation userLoc = UserLocation.GetUserLocation(curLocation);
-								currentLocationNumber = userLoc.GetLocationNumber();
-								if(currentLocationNumber != lastLocation) { // check if location changed
-
-									PlayListActivity.this.runOnUiThread(new Runnable() {
-										public void run() {
-											Toast.makeText(PlayListActivity.this, "Location changed: " + userLoc.GetName(), Toast.LENGTH_SHORT).show();
-										}
-									});
-
-									currentTimeNumber = UserLocation.getCurrentTimeNumber();
-
-									final String predictedMovement = MainActivity.getPredictedMovement(currentLocationNumber, currentTimeNumber, currentMovementStatus);
-
-									SongStatus songStatus = getSongStatusBasedOnMovementType(predictedMovement);
-
-									currentSpeed = songStatus.getSpeed();
-									currentVolume = songStatus.getVolume();
-									currentSongCategory = SongCategory.valueOf(predictedMovement);
-
-									try {
-
-										resetMusicPlayer();
-
-									} catch (Exception e) {
-										final String error = e.getMessage();
-										PlayListActivity.this.runOnUiThread(new Runnable() {
-											public void run() {
-												Toast.makeText(PlayListActivity.this, "ERROR Resetting player. " + error, Toast.LENGTH_SHORT).show();
-											}
-										});
-									}
-									lastLocation = currentLocationNumber;
-									lastUpdate = currentTime;
-								}
-
-							}
-						});
-						thread.start();
+							lastLocation = currentLocationNumber;
+							lastUpdate = currentTime;
+						}
 					}
 
-					// TODO Handle updates based on new location/speed.
 				}
 
 				// Handles when the provider is disabled.
@@ -458,6 +452,7 @@ public class PlayListActivity extends AppCompatActivity {
 					try {
 						songName = file.getName().replaceFirst("[.][^.]+$", "");;
 						selectSpinnerItemByValue(spinner, songName);
+						statusTextView.setText("Playing: " + songName);
 					} catch (Exception e) {
 						Log.e("ERROR", "Error selecting spinner item. " + songName);
 					}
@@ -520,6 +515,7 @@ public class PlayListActivity extends AppCompatActivity {
 					mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
 					mediaPlayer.setLooping(true);
 					mediaPlayer.start();
+					statusTextView.setText("Playing: " + songName);
 				}
 			} else {
 				PlayListActivity.this.runOnUiThread(new Runnable() {

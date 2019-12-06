@@ -15,6 +15,7 @@
     <string name="resetPlayer">Reset Media Player</string>
     <string name="predictUserStatusButton">Predict User Status</string>
     <string name="setSongTitle">Select the song to play</string>
+    <string name="statusText">Status bar.</string>
     <string name="goToPlayList">Go To Play List</string>
     <string name="songSuggestionButton">Suggest a Song</string>
     <string name="returnToMainScreen">Return to Main Screen</string>

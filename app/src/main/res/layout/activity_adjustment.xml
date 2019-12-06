@@ -41,8 +41,8 @@
 
     <SeekBar
         android:id="@+id/seekBarVolume"
-        android:layout_width="100dp"
-        android:layout_height="9dp"
+        android:layout_width="300dp"
+        android:layout_height="15dp"
         android:layout_marginBottom="113dp"
         android:max="@integer/maxPct"
         app:layout_constraintBottom_toTopOf="@+id/setSpeedLabel"
@@ -52,8 +52,8 @@
 
     <SeekBar
         android:id="@+id/seekBarSpeed"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
+        android:layout_width="200dp"
+        android:layout_height="15dp"
         android:max="@integer/maxPct"
         app:layout_constraintBottom_toTopOf="@+id/button2"
         app:layout_constraintEnd_toEndOf="parent"

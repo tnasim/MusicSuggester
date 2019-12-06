@@ -10,7 +10,8 @@ import java.util.Date;
 public class UserLocation {
 	// Constants - note that distances are in meters.
 	public static final int NO_USER_LOCATION = 0;   // Indicates no user location assigned to this place
-	public static final float SAME_LOCATION_DISTANCE = 10F; // Distance two locations can be within each other and be the same location
+	public static final float SAME_LOCATION_DISTANCE = 40F; // Distance two locations can be within each other and be the same location
+	public static final float LOCATION_UPDATE_RANGE = 10F;
 
 	public static Location currentLocation;
 	// Class-level variables
