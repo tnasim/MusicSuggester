@@ -19,6 +19,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -453,6 +454,13 @@ public class PlayListActivity extends AppCompatActivity {
 					mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
 					mediaPlayer.setLooping(true);
 					mediaPlayer.start();
+					String songName = "";
+					try {
+						songName = file.getName().replaceFirst("[.][^.]+$", "");;
+						selectSpinnerItemByValue(spinner, songName);
+					} catch (Exception e) {
+						Log.e("ERROR", "Error selecting spinner item. " + songName);
+					}
 				}
 			} else {
 				PlayListActivity.this.runOnUiThread(new Runnable() {
@@ -591,4 +599,14 @@ public class PlayListActivity extends AppCompatActivity {
 		return songList;
 	}
 
+	public static void selectSpinnerItemByValue(Spinner spnr, String value) {
+		ArrayAdapter<String> adapter = (ArrayAdapter<String>) spnr.getAdapter();
+		for (int position = 0; position < adapter.getCount(); position++) {
+			String currentValue = adapter.getItem(position);
+			if(currentValue.equalsIgnoreCase(value)) {
+				spnr.setSelection(position);
+				return;
+			}
+		}
+	}
 }
