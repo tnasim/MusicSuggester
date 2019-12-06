@@ -141,19 +141,26 @@ public class MainActivity extends AppCompatActivity {
 			Log.d("DEBUG", "========== bestProvider: " + bestProvider);
 
 
-			// If no suitable provider is found, null is returned.
-			if (bestProvider == null) {
-				Log.d("DEBUG", "==== location provider not found");
-				curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation("gps"));
-			} else {
+			try {
+				// If no suitable provider is found, null is returned.
+				if (bestProvider == null) {
+					Log.d("DEBUG", "==== location provider not found");
+					curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation("gps"));
+				} else {
 
-				// Set the current location and the listener for location/speed updates.
-				Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
-				Location loc = locManager.getLastKnownLocation(bestProvider);
-				if(loc != null) {
-					curLocation = UserLocation.GetActualLocation(loc);
-					UserLocation.setCurrentLocation(curLocation);
+					// Set the current location and the listener for location/speed updates.
+					Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
+					Location loc = locManager.getLastKnownLocation(bestProvider);
+					if (loc != null) {
+						curLocation = UserLocation.GetActualLocation(loc);
+						UserLocation.setCurrentLocation(curLocation);
+					}
 				}
+			} catch(Exception e) {
+				Log.e("ERROR", "Problem getting location based on provider: "+ bestProvider);
+			}
+			if(curLocation == null) {
+				curLocation = UserLocation.DEFAULT_LOCATION;
 			}
 			locManager.requestLocationUpdates(bestProvider, 1000, UserLocation.SAME_LOCATION_DISTANCE / 10, locListener);
 		}

@@ -247,16 +247,23 @@ public class PlayListActivity extends AppCompatActivity {
 			Log.d("DEBUG", "========== bestProvider: " + bestProvider);
 
 
-			// If no suitable provider is found, null is returned.
-			if (bestProvider == null) {
-				Log.d("DEBUG", "==== location provider not found");
-				curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation("gps"));
-			} else {
+			try {
+				// If no suitable provider is found, null is returned.
+				if (bestProvider == null) {
+					Log.d("DEBUG", "==== location provider not found");
+					curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation("gps"));
+				} else {
 
-				// Set the current location and the listener for location/speed updates.
-				Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
-				curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation(bestProvider));
-				UserLocation.setCurrentLocation(curLocation);
+					// Set the current location and the listener for location/speed updates.
+					Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
+					curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation(bestProvider));
+					UserLocation.setCurrentLocation(curLocation);
+				}
+			} catch(Exception e) {
+				Log.e("ERROR", "Problem getting location based on provider: "+ bestProvider);
+			}
+			if(curLocation == null) {
+				curLocation = UserLocation.DEFAULT_LOCATION;
 			}
 			locManager.requestLocationUpdates(bestProvider, 1000, UserLocation.SAME_LOCATION_DISTANCE / 10, locListener);
 		}
@@ -477,11 +484,20 @@ public class PlayListActivity extends AppCompatActivity {
 			mediaPlayer.seekTo(resumePosition);
 		}
 
-		mediaPlayer.start();
+		if(mediaPlayer != null) {
+			mediaPlayer.start();
 
-		pauseButton.setVisibility(View.VISIBLE);
-		pauseButton.bringToFront();
-		playButton.setVisibility(View.INVISIBLE);
+			pauseButton.setVisibility(View.VISIBLE);
+			pauseButton.bringToFront();
+			playButton.setVisibility(View.INVISIBLE);
+		} else {
+			PlayListActivity.this.runOnUiThread(new Runnable() {
+				public void run() {
+					Toast.makeText(PlayListActivity.this, "Selected song file might be corrupted. Check in: '/YOUR_DEVICE_ROOT/songs/'",Toast.LENGTH_SHORT).show();
+				}
+			});
+			Log.e("ERROR", "Could not initialize media player for selected song");
+		}
 	}
 
 	private void playOrResumeSongByName(final String songName) {
