@@ -2,13 +2,20 @@ package com.example.musicsuggestor;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
@@ -47,6 +54,17 @@ public class PlayListActivity extends AppCompatActivity {
 	ImageButton playButton;
 	ImageButton pauseButton;
 
+	LocationManager locManager;     // Manages locations
+	LocationListener locListener;   // Listener for location changes
+	Location curLocation;
+
+	public static int currentMovementStatus = 1; // 1 == stationary, 2 = slow, 3 = fast
+	public static int currentLocationNumber = 2;
+	public static int currentTimeNumber = 4;
+
+	public static long lastUpdate = System.currentTimeMillis();
+	public static int lastLocation = 2;
+
 	/**
 	 * Initially we have 4 categories and 5 types of user movement-status.
 	 * Ideally these values should be pulled out from a database and should be personalized for each user.
@@ -68,6 +86,8 @@ public class PlayListActivity extends AppCompatActivity {
 
 		playButton = findViewById(R.id.playButton);
 		pauseButton = findViewById(R.id.pauseButton);
+
+		UserLocation.setCurrentLocation(UserLocation.DEFAULT_LOCATION);
 
 		if(mediaPlayer!=null) {
 			if(mediaPlayer.isPlaying()) {
@@ -100,6 +120,151 @@ public class PlayListActivity extends AppCompatActivity {
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
 		spinner.setAdapter(adapter);
+
+		spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				String songName = parent.getItemAtPosition(position).toString();
+				Log.d("DEBUG", "======================== Song selected : " + songName);
+				playOrResumeSongByName(songName);
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+
+			}
+		});
+
+
+
+		if (checkPermission("ACCESS_FINE_LOCATION", 0, 0) == PackageManager.PERMISSION_GRANTED) {
+			locListener = new LocationListener() {
+				// Handles when the location changes.
+				@Override
+				public void onLocationChanged(Location loc) {
+					final long currentTime = System.currentTimeMillis();
+					long timeDiffInSeconds = (((currentTime - lastUpdate)/1000));
+					final float changeInLocation = curLocation.distanceTo(loc);
+					final float userSpeed = changeInLocation/timeDiffInSeconds; // meter per second: e.g. walking speed average 1.4 m/s
+
+					if(userSpeed < 0.5) {
+						currentMovementStatus = 1;
+					} else if (userSpeed < 1.5) {
+						currentMovementStatus = 2;
+					} else {
+						currentMovementStatus = 3;
+					}
+
+					// Get the actual location.
+					curLocation = UserLocation.GetActualLocation(loc);
+					UserLocation.setCurrentLocation(curLocation);
+					Log.d("DEBUG", "Time Difference: " + timeDiffInSeconds);
+					if (timeDiffInSeconds/60.0 > 1.0 && changeInLocation > UserLocation.SAME_LOCATION_DISTANCE) { // If location change happens within at least half minute.
+
+						/*MainActivity.this.runOnUiThread(new Runnable() {
+							public void run() {
+								Toast.makeText(MainActivity.this, "Speed: " + userSpeed + "; distanceChange: " + changeInLocation + "m; Updating Location ...",Toast.LENGTH_SHORT).show();
+							}
+						});*/
+
+						Thread thread = new Thread(new Runnable() {
+							@Override
+							public void run() {
+								final UserLocation userLoc = UserLocation.GetUserLocation(curLocation);
+								currentLocationNumber = userLoc.GetLocationNumber();
+								if(currentLocationNumber != lastLocation) { // check if location changed
+
+									PlayListActivity.this.runOnUiThread(new Runnable() {
+										public void run() {
+											Toast.makeText(PlayListActivity.this, "Location changed: " + userLoc.GetName(), Toast.LENGTH_SHORT).show();
+										}
+									});
+
+									currentTimeNumber = UserLocation.getCurrentTimeNumber();
+
+									final String predictedMovement = MainActivity.getPredictedMovement(currentLocationNumber, currentTimeNumber, currentMovementStatus);
+
+									SongStatus songStatus = getSongStatusBasedOnMovementType(predictedMovement);
+
+									currentSpeed = songStatus.getSpeed();
+									currentVolume = songStatus.getVolume();
+									currentSongCategory = SongCategory.valueOf(predictedMovement);
+
+									try {
+
+										resetMusicPlayer();
+
+									} catch (Exception e) {
+										final String error = e.getMessage();
+										PlayListActivity.this.runOnUiThread(new Runnable() {
+											public void run() {
+												Toast.makeText(PlayListActivity.this, "ERROR Resetting player. " + error, Toast.LENGTH_SHORT).show();
+											}
+										});
+									}
+									lastLocation = currentLocationNumber;
+									lastUpdate = currentTime;
+								}
+
+							}
+						});
+						thread.start();
+					}
+
+					// TODO Handle updates based on new location/speed.
+				}
+
+				// Handles when the provider is disabled.
+				@Override
+				public void onProviderDisabled(String provider) {
+				}
+
+				// Handles when the provider is enabled.
+				@Override
+				public void onProviderEnabled(String provider) {
+				}
+
+				// Handles when the status changes.
+				@Override
+				public void onStatusChanged(String provider, int status, Bundle extras) {
+				}
+			};
+
+			// Criteria needed to determine the best provider.
+			Criteria c = new Criteria();
+			c.setAccuracy(Criteria.ACCURACY_COARSE);
+			c.setAltitudeRequired(false);
+			c.setBearingRequired(false);
+			c.setSpeedRequired(false);
+			c.setCostAllowed(true);
+			c.setPowerRequirement(Criteria.POWER_HIGH);
+
+			locManager =
+					(LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+			final boolean gpsEnabled = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+			if (!gpsEnabled) {
+				Log.d("DEBUG", "==== GPS Provider not available");
+			}
+
+			String bestProvider = locManager.getBestProvider(c, true);
+			Log.d("DEBUG", "========== bestProvider: " + bestProvider);
+
+
+			// If no suitable provider is found, null is returned.
+			if (bestProvider == null) {
+				Log.d("DEBUG", "==== location provider not found");
+				curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation("gps"));
+			} else {
+
+				// Set the current location and the listener for location/speed updates.
+				Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
+				curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation(bestProvider));
+				UserLocation.setCurrentLocation(curLocation);
+			}
+			locManager.requestLocationUpdates(bestProvider, 1000, UserLocation.SAME_LOCATION_DISTANCE / 10, locListener);
+		}
 
 	}
 
@@ -263,7 +428,7 @@ public class PlayListActivity extends AppCompatActivity {
 		}
 	}
 
-	public void playOrResume(View view) {
+	private void playOrResumeSong() {
 		Log.d("DEBUG", "SEEK Position: " + resumePosition);
 		if(mediaPlayer == null) {
 			SongStatus songStatus = getSongStatusBasedOnMovementType(PlayListActivity.currentSongCategory.toString());
@@ -283,10 +448,12 @@ public class PlayListActivity extends AppCompatActivity {
 				File file = files[rand.nextInt(files.length)];
 				audioPath = file.getPath();
 				mediaPlayer = MediaPlayer.create(this, Uri.parse(audioPath));
-				mediaPlayer.setVolume(currentVolume, currentVolume);
-				mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
-				mediaPlayer.setLooping(true);
-				mediaPlayer.start();
+				if(mediaPlayer != null) {
+					mediaPlayer.setVolume(currentVolume, currentVolume);
+					mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
+					mediaPlayer.setLooping(true);
+					mediaPlayer.start();
+				}
 			} else {
 				PlayListActivity.this.runOnUiThread(new Runnable() {
 					public void run() {
@@ -309,36 +476,108 @@ public class PlayListActivity extends AppCompatActivity {
 
 		mediaPlayer.start();
 
-		pauseButton.setVisibility(view.VISIBLE);
+		pauseButton.setVisibility(View.VISIBLE);
 		pauseButton.bringToFront();
-		playButton.setVisibility(view.INVISIBLE);
+		playButton.setVisibility(View.INVISIBLE);
 	}
 
-	public void stop(View view) {
+	private void playOrResumeSongByName(final String songName) {
+		Log.d("DEBUG", "SEEK Position: " + resumePosition);
+		stopSong();
+		mediaPlayer = null;
+
+		Song songToPlay = songList.GetSong(songName);
+		Log.d("DEBUG", "============== Song to play: " + songToPlay.getCategory());
+
+		SongStatus songStatus = getSongStatusBasedOnMovementType(songToPlay.getCategory().toString());
+
+		currentVolume = songStatus.getVolume();  //*** Get new volume from machine learning
+		currentSpeed = songStatus.getSpeed();   //*** Get new speed from machine learning
+
+		String audioPath;
+		File rootFolder = Environment.getExternalStorageDirectory();
+		String categoryFolder = rootFolder.getPath() + "/songs/" + (songToPlay.getCategory().getValue() ) + File.separator;
+
+		Log.d("DEBUG", "============= categoryFolder: " + categoryFolder);
+		File catFolder = new File(categoryFolder);
+		if(catFolder.exists()) {
+
+			Log.d("DEBUG", "============= Playing: " + categoryFolder  + songName + ".mp3");
+			File file = new File(categoryFolder + File.separator + songName + ".mp3");
+			if(file.exists()) {
+				audioPath = file.getPath();
+				mediaPlayer = MediaPlayer.create(this, Uri.parse(audioPath));
+				if (mediaPlayer != null) {
+					mediaPlayer.setVolume(currentVolume, currentVolume);
+					mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
+					mediaPlayer.setLooping(true);
+					mediaPlayer.start();
+				}
+			} else {
+				PlayListActivity.this.runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(PlayListActivity.this, songName + "  Not Found.",Toast.LENGTH_SHORT).show();
+					}
+				});
+			}
+		} else {
+			PlayListActivity.this.runOnUiThread(new Runnable() {
+				public void run() {
+					Toast.makeText(PlayListActivity.this, "No song available in INTERNAL_STORAGE/songs/ folder",Toast.LENGTH_SHORT).show();
+				}
+			});
+			return;
+		}
+
+		if(mediaPlayer != null) {
+			mediaPlayer.start();
+			pauseButton.setVisibility(View.VISIBLE);
+			pauseButton.bringToFront();
+			playButton.setVisibility(View.INVISIBLE);
+		}
+	}
+
+	public void playOrResume(View view) {
+		playOrResumeSong();
+	}
+
+	private void stopSong() {
 		if (mediaPlayer == null) return;
 		if (mediaPlayer.isPlaying()) {
 			mediaPlayer.stop();
 			resumePosition = 0;
-			playButton.setVisibility(view.VISIBLE);
+			playButton.setVisibility(View.VISIBLE);
 			playButton.bringToFront();
-			pauseButton.setVisibility(view.INVISIBLE);
+			pauseButton.setVisibility(View.INVISIBLE);
+		}
+	}
+
+	public void stop(View view) {
+		stopSong();
+	}
+
+	private void pauseSong() {
+		if (mediaPlayer.isPlaying()) {
+			mediaPlayer.pause();
+			resumePosition = mediaPlayer.getCurrentPosition();
+			playButton.setVisibility(View.VISIBLE);
+			playButton.bringToFront();
+			pauseButton.setVisibility(View.INVISIBLE);
 		}
 	}
 
 	public void pause(View view) {
-		if (mediaPlayer.isPlaying()) {
-			mediaPlayer.pause();
-			resumePosition = mediaPlayer.getCurrentPosition();
-			playButton.setVisibility(view.VISIBLE);
-			playButton.bringToFront();
-			pauseButton.setVisibility(view.INVISIBLE);
-		}
+		pauseSong();
+	}
+
+	private void resetMusicPlayer() {
+		stopSong();
+		mediaPlayer = null;
+		playOrResumeSong();
 	}
 
 	public void resetPlayer(View view) {
-		stop(view);
-		mediaPlayer = null;
-		playOrResume(view);
+		resetMusicPlayer();
 
 	}
 
@@ -351,4 +590,5 @@ public class PlayListActivity extends AppCompatActivity {
 	public static PlayList getSongList() {
 		return songList;
 	}
+
 }

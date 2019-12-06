@@ -2,8 +2,9 @@
 <resources>
     <string-array name="songUriList">
         <item>1|Something Just Like This|https://d.mp3-send.com/YuWBZB:bJx1rB</item>
+        <item>1|Caravansary - Kitaro|https://d.mp3-send.com/DvWBZB:eAt2rB</item>
         <item>1|Kotobaro Bhebechinu|https://d.mp3-send.com/NxcVvB:AEy1rB</item>
-        <item>1|Badolo Dinero Prothomo Kodomo Phool|https://d.mp3-send.com/CXCruH:VDHAAB</item>
+        <item>1|Silk Road - Kitaro|https://d.mp3-send.com/EtcVvB:ZRM2rB</item>
         <item>2|SoundHelix-Song-3|https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3</item>
         <item>2|SoundHelix-Song-4|https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3</item>
         <item>2|Vivaldi Sonata|http://www.hochmuth.com/mp3/Vivaldi_Sonata_eminor_.mp3</item>

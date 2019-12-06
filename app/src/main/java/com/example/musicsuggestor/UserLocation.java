@@ -3,33 +3,72 @@ package com.example.musicsuggestor;
 import android.location.Location;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 // Handles locations (both user-specified and physical).
 public class UserLocation {
 	// Constants - note that distances are in meters.
 	public static final int NO_USER_LOCATION = 0;   // Indicates no user location assigned to this place
-	public static final float SAME_LOCATION_DISTANCE = 5F; // Distance two locations can be within each other and be the same location
+	public static final float SAME_LOCATION_DISTANCE = 10F; // Distance two locations can be within each other and be the same location
 
 	public static Location currentLocation;
 	// Class-level variables
-	private static int nextLocationNumber = 0;      // Number of the next location
 	private static ArrayList<UserLocation> locationList = new ArrayList<UserLocation>();    // List of locations
 	private static ArrayList<String> nameList = new ArrayList<String>();    // List of strings
 
 	public static Location LOC_BYENG = new Location("dummyprovider");
+	public static Location LOC_HOME = new Location("dummyprovider");
+	public static Location LOC_GROCERY = new Location("dummyprovider");
+	public static Location LOC_GYM = new Location("dummyprovider");
+	public static Location LOC_LIBRARY = new Location("dummyprovider");
+	public static Location LOC_STREET = new Location("dummyprovider");
+	public static Location LOC_RESTAURANT = new Location("dummyprovider");
+	public static Location LOC_PARK = new Location("dummyprovider");
 
 	public static Location DEFAULT_LOCATION;
 
 	static {
 		LOC_BYENG.setLatitude(33.4237075);
 		LOC_BYENG.setLongitude(-111.9396098);
+		locationList.add(new UserLocation(2, "school", LOC_BYENG));
+
+		LOC_HOME.setLatitude(33.4242870);
+		LOC_HOME.setLongitude(-111.9398719);
+		locationList.add(new UserLocation(1, "home", LOC_HOME));
+
+		LOC_GROCERY.setLatitude(33.4232928);
+		LOC_GROCERY.setLongitude(-111.9398639);
+		locationList.add(new UserLocation(3, "grocery", LOC_GROCERY));
+
+		LOC_GYM.setLatitude(33.4237075);
+		LOC_GYM.setLongitude(-111.9396098);
+		locationList.add(new UserLocation(4, "gym", LOC_GYM));
+
+		LOC_LIBRARY.setLatitude(33.4232010);
+		LOC_LIBRARY.setLongitude(-111.9404778);
+		locationList.add(new UserLocation(5, "library", LOC_LIBRARY));
+
+		LOC_STREET.setLatitude(33.4232310);
+		LOC_STREET.setLongitude(-111.9409663);
+		locationList.add(new UserLocation(6, "street", LOC_STREET));
+
+		LOC_RESTAURANT.setLatitude(33.4239187);
+		LOC_RESTAURANT.setLongitude(-111.9398870);
+		locationList.add(new UserLocation(7, "restaurant", LOC_RESTAURANT));
+
+		LOC_PARK.setLatitude(33.4237626);
+		LOC_PARK.setLongitude(-111.9382056);
+		locationList.add(new UserLocation(8, "park", LOC_PARK));
+
 		DEFAULT_LOCATION = LOC_BYENG;
 	}
 
 	// Constructor for location.  This is private because users should use location numbers instead.
-	private UserLocation(String name, Location newLocation) {
+	private UserLocation(int number, String name, Location newLocation) {
 		SetLocation(newLocation);
-		locNumber = nextLocationNumber++;
+		locNumber = number;
+		this.name = name;
 
 		locationList.add(this);
 		nameList.add(name);
@@ -49,7 +88,7 @@ public class UserLocation {
 
 		// If the location is new, add it to the list.
 		if ((curLoc = GetUserLocation(name)) == null)
-			curLoc = new UserLocation(name, newLocation);
+			curLoc = new UserLocation(2, name, newLocation);
 		else
 			curLoc.SetLocation(newLocation);
 	}
@@ -79,13 +118,8 @@ public class UserLocation {
 		return 1;
 	}
 
-	public static int getCurrentTime() {
-		// TODO return time information e.g. 'night', 'evening' etc. Should have a map of the values.
-		return 2;
-	}
-
 	// Returns the user location of the specified location.
-	private static UserLocation GetUserLocation(Location physicalLocation) {
+	public static UserLocation GetUserLocation(Location physicalLocation) {
 		for (UserLocation curLoc : locationList) {
 			if (curLoc.IsLocationInHere(physicalLocation))
 				return curLoc;
@@ -122,18 +156,39 @@ public class UserLocation {
 	}
 
 	// Returns the location number.
-	private int GetLocationNumber() {
+	public int GetLocationNumber() {
 		return locNumber;
 	}
 
 	// Returns the name of the location.
-	private String GetName() {
+	public String GetName() {
 		return name;
 	}
 
 	// Returns the location of the user location.
 	private Location GetLocation() {
 		return location;
+	}
+
+	public static int getCurrentTimeNumber() {
+		Calendar cal = Calendar.getInstance();
+		Date time = cal.getTime();
+		int hour = cal.get(Calendar.HOUR_OF_DAY);
+		if(hour <= 5) {
+			return 6; // midnight
+		} else if( hour <= 11) {
+			return 1; // morning
+		} else if (hour <= 13) {
+			return 2; // noon
+		} else if(hour <= 16) {
+			return 3; // afternoon
+		} else if(hour <= 20) {
+			return 4; // evening
+		} else if(hour <= 24) {
+			return 5; // night
+		}
+
+		return 4;
 	}
 
 	private int locNumber;  // Number of the location

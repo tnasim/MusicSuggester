@@ -53,10 +53,6 @@ public class MainActivity extends AppCompatActivity {
 
 	private ProgressDialog progressDialog;
 
-	public static int currentMovementStatus = 1; // 1 == stationary, 2 = slow, 3 = fast
-
-	public static long lastUpdate = System.currentTimeMillis();
-
 	// Handles when the app is created.
 	@Override protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -97,72 +93,14 @@ public class MainActivity extends AppCompatActivity {
 					1);
 		}
 
-		btn_download_songs = findViewById(R.id.btnDownloadSongs);
-		btn_download_songs.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				String[] songList = getResources().getStringArray(R.array.songUriList);
-				progressDialog = new ProgressDialog(MainActivity.this);
-				progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-				progressDialog.setMessage("Downloading ...");
-				progressDialog.setCancelable(false);
-				progressDialog.setMax(songList.length);
-				progressDialog.show();
+		UserLocation.setCurrentLocation(UserLocation.DEFAULT_LOCATION);
 
-				String line = songList[0]; // The first line
-				String[] splitted = line.split("\\|");
-				String songUri = splitted[2];
-
-				new DownloadFile(songList, 0).execute(songUri);
-			}
-		});
-
-		// Set up the location handling (if allowed).
 		if (checkPermission("ACCESS_FINE_LOCATION", 0, 0) == PackageManager.PERMISSION_GRANTED) {
+
 			locListener = new LocationListener() {
 				// Handles when the location changes.
 				@Override
 				public void onLocationChanged(Location loc) {
-					long currentTime = System.currentTimeMillis();
-					long timeDiffInSeconds = (((currentTime - lastUpdate)/1000));
-					final float changeInLocation = curLocation.distanceTo(loc);
-					final float userSpeed = changeInLocation/timeDiffInSeconds; // meter per second: e.g. walking speed average 1.4 m/s
-
-					if(userSpeed < 0.5) {
-						currentMovementStatus = 1;
-					} else if (userSpeed < 1.5) {
-						currentMovementStatus = 2;
-					} else {
-						currentMovementStatus = 3;
-					}
-
-					// Get the actual location.
-					curLocation = UserLocation.GetActualLocation(loc);
-					UserLocation.setCurrentLocation(curLocation);
-
-					if (timeDiffInSeconds/60.0 > 1.0 && changeInLocation > UserLocation.SAME_LOCATION_DISTANCE) { // If location change happens within at least 1 minute.
-
-						MainActivity.this.runOnUiThread(new Runnable() {
-							public void run() {
-								Toast.makeText(MainActivity.this, "Speed: " + userSpeed + "; distanceChange: " + changeInLocation + "m; Updating Location ...",Toast.LENGTH_SHORT).show();
-							}
-						});
-
-						Thread thread = new Thread(new Runnable() {
-							@Override
-							public void run() {
-								final String predictedMovement = getPredictedMovement();
-
-								SongStatus songStatus = PlayListActivity.getSongStatusBasedOnMovementType(predictedMovement);
-
-								PlayListActivity.currentSpeed = songStatus.getSpeed();
-								PlayListActivity.currentVolume = songStatus.getVolume();
-								PlayListActivity.currentSongCategory = SongCategory.valueOf(predictedMovement);
-							}
-						});
-					}
-
-					// TODO Handle updates based on new location/speed.
 				}
 
 				// Handles when the provider is disabled.
@@ -211,14 +149,40 @@ public class MainActivity extends AppCompatActivity {
 
 				// Set the current location and the listener for location/speed updates.
 				Log.d("DEBUG", "============= User's Last Known Location: " + locManager.getLastKnownLocation("gps"));
-				curLocation = UserLocation.GetActualLocation(locManager.getLastKnownLocation(bestProvider));
-				UserLocation.setCurrentLocation(curLocation);
+				Location loc = locManager.getLastKnownLocation(bestProvider);
+				if(loc != null) {
+					curLocation = UserLocation.GetActualLocation(loc);
+					UserLocation.setCurrentLocation(curLocation);
+				}
 			}
 			locManager.requestLocationUpdates(bestProvider, 1000, UserLocation.SAME_LOCATION_DISTANCE / 10, locListener);
 		}
+
+		btn_download_songs = findViewById(R.id.btnDownloadSongs);
+		btn_download_songs.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				String[] songList = getResources().getStringArray(R.array.songUriList);
+				progressDialog = new ProgressDialog(MainActivity.this);
+				progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				progressDialog.setMessage("Downloading ...");
+				progressDialog.setCancelable(false);
+				progressDialog.setMax(songList.length);
+				progressDialog.show();
+
+				String line = songList[0]; // The first line
+				String[] splitted = line.split("\\|");
+				String songUri = splitted[2];
+
+				new DownloadFile(songList, 0).execute(songUri);
+			}
+		});
+
+		// Set up the location handling (if allowed).
+
 	}
 
-	private String getPredictedMovement() {
+	public static String getPredictedMovement(int loc, int time, int movement) {
 		final String predictedMovement;
 		HttpURLConnection conn = null;
 		try {
@@ -231,9 +195,9 @@ public class MainActivity extends AppCompatActivity {
 			conn.setDoInput(true);
 
 			JSONObject jsonParam = new JSONObject();
-			jsonParam.put("location", 1);
-			jsonParam.put("time", UserLocation.getCurrentTime());
-			jsonParam.put("movement", UserLocation.getUserMobilityStatus());
+			jsonParam.put("location", loc);
+			jsonParam.put("time", time);
+			jsonParam.put("movement", movement);
 
 			Log.i("JSON", jsonParam.toString());
 			DataOutputStream os = new DataOutputStream(conn.getOutputStream());
@@ -349,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
 			@Override
 			public void run() {
 				try {
-					final String predictedMovement = getPredictedMovement();
+					final String predictedMovement = getPredictedMovement(PlayListActivity.currentLocationNumber, PlayListActivity.currentTimeNumber, PlayListActivity.currentMovementStatus);
 //					Toast.makeText(getApplicationContext(),"Selected movement: ",Toast.LENGTH_SHORT).show();
 					PlayListActivity.currentSongCategory = SongCategory.valueOf(predictedMovement);
 
@@ -413,6 +377,8 @@ public class MainActivity extends AppCompatActivity {
 					break;
 				case 5:
 					cat = SongCategory.driving;
+					break;
+
 					default:
 						cat = SongCategory.rest;
 			}
