@@ -161,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 			if(curLocation == null) {
 				curLocation = UserLocation.DEFAULT_LOCATION;
+				UserLocation.setCurrentLocation(curLocation);
 			}
 			locManager.requestLocationUpdates(bestProvider, 1000, UserLocation.SAME_LOCATION_DISTANCE / 10, locListener);
 		}

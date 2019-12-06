@@ -39,7 +39,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Formatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -47,12 +49,18 @@ import java.util.Random;
 public class PlayListActivity extends AppCompatActivity {
 
 	Spinner spinner;
+
+	public static final int STOPPED = 0;
+	public static final int PAUSED = 2;
+	public static final int PLAYING = 1;
+
 	public static SongCategory DEFAULT_SONG_CATEGORY = SongCategory.rest;
 	public static SongCategory currentSongCategory = DEFAULT_SONG_CATEGORY;
 
 	public static MediaPlayer mediaPlayer;
 
 	public static boolean flagFirstTime = true;
+	public static int songPlayStatus = 0;
 
 	public static int resumePosition = 0;
 
@@ -69,6 +77,24 @@ public class PlayListActivity extends AppCompatActivity {
 
 	public static long lastUpdate = System.currentTimeMillis();
 	public static int lastLocation = 2;
+
+	public static String currentlyPlayingSong = "";
+
+	Map<Integer, String> mapTimeNumber = new HashMap<Integer, String>() {{
+		put(1, "morning");
+		put(2, "noon");
+		put(3, "afternoon");
+		put(4, "evening");
+		put(5, "night");
+		put(6, "midnight");
+	}};
+
+	Map<Integer, String> mapMovementNumber = new HashMap<Integer, String>() {{
+		put(1, "stationary");
+		put(2, "slow");
+		put(3, "fast");
+	}};
+
 
 	/**
 	 * Initially we have 4 categories and 5 types of user movement-status.
@@ -88,6 +114,48 @@ public class PlayListActivity extends AppCompatActivity {
 	private TextView statusTextView;
 
 
+	protected void updateStatusBar() {
+		String statusText = "";
+
+		try {
+			String playing = "";
+			if(songPlayStatus == PLAYING) {
+				playing = "PLAYING: " + currentlyPlayingSong;
+			} else if(songPlayStatus == STOPPED){
+				playing = "STOPPED";
+			} else {
+				playing = "PAUSED: " + currentlyPlayingSong;
+			}
+
+			String time = mapTimeNumber.get(UserLocation.getCurrentTimeNumber());
+			String movement = mapMovementNumber.get(currentMovementStatus);
+			String location = UserLocation.GetUserLocation(UserLocation.getCurrentLocation()).GetName();
+
+			/*statusText += location + ", " + time + ", " + movement + "\n";
+			statusText += currentSongCategory.toString();*/
+
+			statusText = String.format("%50s\n%20s %20s %20s\n%50s", playing, location, time, movement, currentSongCategory.toString());
+		} catch(Exception e) {
+			Log.e("ERROR", "Error updating status bar. " + e.getMessage());
+		}
+
+		statusTextView.setText(statusText);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		flagFirstTime = true;
+	}
+
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		selectSpinnerItemByValue(spinner, currentlyPlayingSong);
+		updateStatusBar();
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 
@@ -101,6 +169,8 @@ public class PlayListActivity extends AppCompatActivity {
 		statusTextView.setVisibility(View.VISIBLE);
 		statusTextView.setBackgroundColor(Color.DKGRAY);
 		statusTextView.setTextColor(Color.WHITE);
+
+		currentTimeNumber = UserLocation.getCurrentTimeNumber();
 
 		UserLocation.setCurrentLocation(UserLocation.DEFAULT_LOCATION);
 
@@ -173,17 +243,17 @@ public class PlayListActivity extends AppCompatActivity {
 					curLocation = UserLocation.GetActualLocation(loc);
 					UserLocation.setCurrentLocation(curLocation);
 					Log.d("DEBUG", "Time Difference: " + timeDiffInSeconds);
-//					statusTextView.setText("timeDiff(mins): " + timeDiffInSeconds/60.0f + "; changeInLocation: " + changeInLocation + "m; " + "loc1: " + lastLocation + "; loc2: " + currentLocationNumber);
+					updateStatusBar();
 					if (timeDiffInSeconds/60.0f > 0.5f && changeInLocation > UserLocation.LOCATION_UPDATE_RANGE) { // If location change happens within at least half minute.
 
 						final UserLocation userLoc = UserLocation.GetUserLocation(curLocation);
 						currentLocationNumber = userLoc.GetLocationNumber();
 
-//						statusTextView.setText("Speed: " + userSpeed + "; distChange: " + changeInLocation + "m;" + "l1: " + lastLocation + "; l2: " + currentLocationNumber);
+						updateStatusBar();
 
 						if(currentLocationNumber != lastLocation) { // check if location changed
 
-							statusTextView.setText("Updating loc: " + userLoc.GetName());
+							updateStatusBar();
 
 							currentTimeNumber = UserLocation.getCurrentTimeNumber();
 
@@ -198,6 +268,7 @@ public class PlayListActivity extends AppCompatActivity {
 							try {
 
 								resetMusicPlayer();
+								updateStatusBar();
 
 							} catch (Exception e) {
 								Log.e("Error", "Unable to resetMusicPlayer");
@@ -264,6 +335,7 @@ public class PlayListActivity extends AppCompatActivity {
 			}
 			if(curLocation == null) {
 				curLocation = UserLocation.DEFAULT_LOCATION;
+				UserLocation.setCurrentLocation(curLocation);
 			}
 			locManager.requestLocationUpdates(bestProvider, 1000, UserLocation.SAME_LOCATION_DISTANCE / 10, locListener);
 		}
@@ -454,12 +526,13 @@ public class PlayListActivity extends AppCompatActivity {
 					mediaPlayer.setVolume(currentVolume, currentVolume);
 					mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
 					mediaPlayer.setLooping(true);
-					mediaPlayer.start();
 					String songName = "";
 					try {
 						songName = file.getName().replaceFirst("[.][^.]+$", "");;
 						selectSpinnerItemByValue(spinner, songName);
 						statusTextView.setText("Playing: " + songName);
+						currentlyPlayingSong = songName;
+
 					} catch (Exception e) {
 						Log.e("ERROR", "Error selecting spinner item. " + songName);
 					}
@@ -490,6 +563,10 @@ public class PlayListActivity extends AppCompatActivity {
 			pauseButton.setVisibility(View.VISIBLE);
 			pauseButton.bringToFront();
 			playButton.setVisibility(View.INVISIBLE);
+
+			songPlayStatus = PLAYING;
+
+			updateStatusBar();
 		} else {
 			PlayListActivity.this.runOnUiThread(new Runnable() {
 				public void run() {
@@ -530,8 +607,6 @@ public class PlayListActivity extends AppCompatActivity {
 					mediaPlayer.setVolume(currentVolume, currentVolume);
 					mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(currentSpeed));
 					mediaPlayer.setLooping(true);
-					mediaPlayer.start();
-					statusTextView.setText("Playing: " + songName);
 				}
 			} else {
 				PlayListActivity.this.runOnUiThread(new Runnable() {
@@ -554,6 +629,11 @@ public class PlayListActivity extends AppCompatActivity {
 			pauseButton.setVisibility(View.VISIBLE);
 			pauseButton.bringToFront();
 			playButton.setVisibility(View.INVISIBLE);
+
+			currentlyPlayingSong = songName;
+			songPlayStatus = PLAYING;
+
+			updateStatusBar();
 		}
 	}
 
@@ -569,6 +649,7 @@ public class PlayListActivity extends AppCompatActivity {
 			playButton.setVisibility(View.VISIBLE);
 			playButton.bringToFront();
 			pauseButton.setVisibility(View.INVISIBLE);
+			songPlayStatus = STOPPED;
 		}
 	}
 
@@ -583,6 +664,7 @@ public class PlayListActivity extends AppCompatActivity {
 			playButton.setVisibility(View.VISIBLE);
 			playButton.bringToFront();
 			pauseButton.setVisibility(View.INVISIBLE);
+			songPlayStatus = PAUSED;
 		}
 	}
 

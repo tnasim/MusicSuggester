@@ -122,12 +122,12 @@
         app:layout_constraintVertical_bias="0.19999999" />
 
     <Button
-        android:id="@+id/resetPlayer"
+        android:id="@+id/playRandomSong"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:onClick="resetPlayer"
-        android:text="@string/resetPlayer"
+        android:text="@string/playRandomSong"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/removeSongButton"
@@ -143,13 +143,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.518"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/resetPlayer"
+        app:layout_constraintTop_toBottomOf="@id/playRandomSong"
         app:layout_constraintVertical_bias="0.976"/>
 
     <TextView
         android:id="@+id/statusText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:maxLines="3"
+        android:lines="3"
         android:minHeight="50dp"
         android:layout_marginBottom="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
