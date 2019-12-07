@@ -1,5 +1,4 @@
-# cse535-2019F-A2
-<h1>CSE 535 - Fall 2019 - Project - Team 3</h1>
+# CSE535-Fall2019-Project-Team 3
 <b>Music Suggestor App</b>
 
 A music player Android application that can suggest users with appropriate songs based users current location (e.g. school, home, restaurant etc.), users mood.
