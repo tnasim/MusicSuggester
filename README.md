@@ -1,8 +1,7 @@
-# CSE535-Fall2019-Project-Team 3
-<b>Music Suggestor App</b>
+# Music Suggester App
 
-A music player Android application that can suggest users with appropriate songs based users current location (e.g. school, home, restaurant etc.), users mood.
-There are two parts of the project, and Android Application 'MusicSuggestor' and a Server that provides with predicted song category based on user's current information.
+This music player Android application can suggest users with appropriate songs based users current location (e.g. school, home, restaurant etc.), users mood.
+There are two parts of the project, and Android Application 'MusicSuggestor' and a Server (APIs) that provides with predicted song category based on user's current information.
 
 <h2>Details</h2>
 The server mainly provides with api that receives 'application/json' data and responds with json data as well.
@@ -64,6 +63,10 @@ The server mainly provides with api that receives 'application/json' data and re
 </ol>
 <h4>Required Android Version</h4>
 We have tested it under <b>Android OS Version 7</b> or above
+
+---
+
+This project was done for CSE535-Fall2019 (Team 3) at Arizona State University under Dr. Ayan Banerjee.
 
 
 
